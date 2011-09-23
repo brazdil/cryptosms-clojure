@@ -37,19 +37,19 @@
         </fail>
     </target>
     <target name="compile" depends="verifyCompileProperties">
-        <mkdir dir="${src_dir}/classes" />
+        <mkdir dir="${dst_dir}/classes" />
         <java classname="clojure.lang.Compile" fork="true" failonerror="true">
             <classpath>
                 <pathelement location="${src_dir}" />
-                <pathelement location="${src_dir}/classes" />
+                <pathelement location="${dst_dir}/classes" />
                 <pathelement location="${clojure_jar}" />
                 <pathelement location="${contrib_jar}" />
             </classpath>
-            <sysproperty key="clojure.compile.path" value="${src_dir}/classes" />
+            <sysproperty key="clojure.compile.path" value="${dst_dir}/classes" />
             <arg value="${app}" />
         </java>
         <delete file="${dst_lib}/${app_jar}" />
-        <jar destfile="${dst_lib}/${app_jar}" basedir="${src_dir}/classes" index="true">
+        <jar destfile="${dst_lib}/${app_jar}" basedir="${dst_dir}/classes" index="true">
             <manifest>
                 <attribute name="Implementation-Vendor" value="${vendor}" />
                 <attribute name="Implementation-Title" value="${title}" />
@@ -57,6 +57,6 @@
                 <attribute name="Class-Path" value="." />
             </manifest>
         </jar>
-        <delete dir="${src_dir}/classes" />
+        <delete dir="${dst_dir}/classes" />
     </target>
 </project>
