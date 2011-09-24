@@ -6,6 +6,7 @@
     <property name="contrib_jar" value="${clojure_home}/${contrib_jar_file}" />
     <property name="src_dir" value="src" />
     <property name="dst_dir" value="dst" />
+    <property name="dst_classes" value="${dst_dir}/classes" />
     <property name="dst_lib" value="${dst_dir}/lib" />
     <property name="app_file" value="uk/ac/cam/db538/cryptosms/main.clj" />
     <property name="app" value="uk.ac.cam.db538.cryptosms.main" />
@@ -37,19 +38,21 @@
         </fail>
     </target>
     <target name="compile" depends="verifyCompileProperties">
-        <mkdir dir="${dst_dir}/classes" />
+        <mkdir dir="${dst_classes}" />
         <java classname="clojure.lang.Compile" fork="true" failonerror="true">
             <classpath>
                 <pathelement location="${src_dir}" />
-                <pathelement location="${dst_dir}/classes" />
+                <pathelement location="${dst_classes}" />
                 <pathelement location="${clojure_jar}" />
                 <pathelement location="${contrib_jar}" />
             </classpath>
-            <sysproperty key="clojure.compile.path" value="${dst_dir}/classes" />
-            <arg value="${app}" />
+            <sysproperty key="clojure.compile.path" value="${dst_classes}" />
+	    <arg value="uk.ac.cam.db538.cryptosms.utils" />
+       	    <arg value="uk.ac.cam.db538.cryptosms.main" />
+            <arg value="uk.ac.cam.db538.cryptosms.crypto.ICryptography" />
         </java>
         <delete file="${dst_lib}/${app_jar}" />
-        <jar destfile="${dst_lib}/${app_jar}" basedir="${dst_dir}/classes" index="true">
+        <jar destfile="${dst_lib}/${app_jar}" basedir="${dst_classes}" index="true">
             <manifest>
                 <attribute name="Implementation-Vendor" value="${vendor}" />
                 <attribute name="Implementation-Title" value="${title}" />
@@ -57,6 +60,6 @@
                 <attribute name="Class-Path" value="." />
             </manifest>
         </jar>
-        <delete dir="${dst_dir}/classes" />
+        <delete dir="${dst_classes}" />
     </target>
 </project>
