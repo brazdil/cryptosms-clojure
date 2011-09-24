@@ -8,34 +8,20 @@
     <property name="dst_dir" value="dst" />
     <property name="dst_classes" value="${dst_dir}/classes" />
     <property name="dst_lib" value="${dst_dir}/lib" />
-    <property name="app_file" value="uk/ac/cam/db538/cryptosms/main.clj" />
-    <property name="app" value="uk.ac.cam.db538.cryptosms.main" />
     <property name="app_jar" value="cryptosms.jar" />
     <property name="vendor" value="David Brazdil" />
     <property name="title" value="CryptoSMS" />
     <property name="version" value="0.1" />
     <target name="default" depends="compile" />
     <target name="verifyRunProperties">
-        <fail unless="app">
-            You need to have a variable 'app' in your build.properties file set to a Clojure namespace (e.g.: com.company.app.main).
-            For further explanation, see the simplest :gen-class example on the compilation page of the Clojure website.
-        </fail>
         <fail unless="app_jar">You need to have a variable 'app_jar' in your build.properties file set to the name of the resulting jar file.</fail>
     </target>
     <target name="verifyCompileProperties" depends="verifyRunProperties">
         <fail unless="clojure_jar">You need to have a variable 'clojure_jar' in your build.properties file set to the full path to the clojure.jar file.</fail>
         <fail unless="contrib_jar">You need to have a variable 'contrib_jar' in your build.properties file set to the full path to the clojure-contrib.jar file.</fail>
-        <fail unless="app_file">You need to have a variable 'app_dir' in your build.properties file set to the relative path to your main file (e.g.: com/company/app/main.clj).</fail>
         <fail unless="vendor">You need to have a variable 'vendor' in your build.properties file set to the name of the application's Author.</fail>
         <fail unless="title">You need to have a variable 'title' in your build.properties file set to the name of the application.</fail>
         <fail unless="version">You need to have a variable 'version' in your build.properties file set to the version of the application.</fail>
-        <fail message="You must have your application's main file at the location specified by the variable 'app_file' (${app_file}).">
-            <condition>
-                <not>
-                    <available file="${src_dir}/${app_file}" />
-                </not>
-            </condition>
-        </fail>
     </target>
     <target name="compile" depends="verifyCompileProperties">
         <mkdir dir="${dst_classes}" />
@@ -47,8 +33,8 @@
                 <pathelement location="${contrib_jar}" />
             </classpath>
             <sysproperty key="clojure.compile.path" value="${dst_classes}" />
-	    <arg value="uk.ac.cam.db538.cryptosms.utils" />
-       	    <arg value="uk.ac.cam.db538.cryptosms.main" />
+            <arg value="uk.ac.cam.db538.cryptosms.utils" />
+            <arg value="uk.ac.cam.db538.cryptosms.crypto.SymmetricKey" />
             <arg value="uk.ac.cam.db538.cryptosms.crypto.ICryptography" />
         </java>
         <delete file="${dst_lib}/${app_jar}" />
