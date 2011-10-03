@@ -5,9 +5,9 @@
   (defn 
     ^{:doc "get-byte [x i] returns the i-th byte in binary representation of unsigned integer x (max 64-bit)" }
     get-byte [^Number x ^Number i]
-      (if (or (> i 7) (< i 0)))
+      (if (or (> i 7) (< i 0))
         0
-        (bit-and (bit-shift-right (long x) (* i 8)) 0xFF))
+        (bit-and (bit-shift-right (long x) (* i 8)) 0xFF)))
   (is (= (get-byte 0 0) 0))
   (is (= (get-byte 1 0) 1))
   (is (= (get-byte 1 1) 0))
@@ -50,6 +50,22 @@
   (is (= (get-bytes 65536 2) [0 0]))
   (is (= (get-bytes -1 2) [255 255]))
   (is (= (get-bytes -2 2) [255 254])))
+
+(defn pow [base exp]
+  (letfn 
+    [(kapow [base exp acc]
+      (if (zero? exp)
+        acc
+        (recur base (dec exp) (* base acc))))]
+    (kapow base exp 1)))
+
+; TODO: test
+(defn parse-bytes [xs]
+  (loop [xs xs, accu 0, exp 0]
+    (if (empty? xs)
+      accu
+      (recur (pop xs) (+ accu (* (peek xs) (pow 2 exp))) (+ exp 8)))))
+
 
 (defn 
   ^{:doc "uint8 [x] returns the 1-byte binary representation of unsigned integer x" }
