@@ -103,14 +103,14 @@
             (throw (new IllegalArgumentException))
             {name (parse-integer-bytes xs)}))
         ; length
-        (fn [] len) )))
+        len )))
   (is (thrown? IllegalArgumentException (uint-type-factory :test -1)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 0)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 9)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 10)))
   (is (= ((:export (uint-type-factory :test 3)) {:test 0x123456}) [ 0x12 0x34 0x56 ]))
   (is (= ((:import (uint-type-factory :test 3)) [ 0xAB 0xCD 0xEF ]) {:test 0xABCDEF}))
-  (is (= ((:length (uint-type-factory :test 3))) 3)))
+  (is (= (:length (uint-type-factory :test 3)) 3)))
 
 (defn uint8 [name] (uint-type-factory name 1))
 (defn uint16 [name] (uint-type-factory name 2))
@@ -119,12 +119,34 @@
 
 ; COMPOSITE
 
-; TODO: test
-(defn composite [exportables]
-  (ExportableType.
-    ; export
-    (fn [data] (reduce #(reduce conj %1 %2) [] (map #((:export %) data) exportables)))
-    ; import
-    nil
-    ; length
-    (fn [] (reduce + 0 (map #((:length %)) exportables)))))
+(with-test
+  (defn composite [exportables]
+    (let [ composite-length (reduce + 0 (map #(:length %) exportables)) ]
+      (ExportableType.
+        ; export
+        (fn [data] (reduce #(reduce conj %1 %2) [] (map #((:export %) data) exportables)))
+        ; import
+        (fn [^bytes xs] 
+          (if (not= (count xs) composite-length)
+            (throw (new IllegalArgumentException))
+            (loop [ items exportables
+                    xs xs
+                    lengths (vec (map #(:length %) exportables))
+                    accu {} ]
+              (if (empty? xs)
+                accu
+                (recur (subvec items 1) (subvec xs (lengths 0)) (subvec lengths 1) (conj accu ((:import (items 0)) (subvec xs 0 (lengths 0))))) ))))
+        ; length
+        composite-length )))
+    (let [ items [ (uint8 :item1) (uint16 :item2) (uint32 :item3) (uint64 :item4) ]
+           data { :item1 0x12, :item2 0x1234, :item3 0x12345678, :item4 0x1234567890ABCDEF} 
+           result [ 0x12 0x12 0x34 0x12 0x34 0x56 0x78 0x12 0x34 0x56 0x78 0x90 0xAB 0xCD 0xEF ]
+         ]
+      (is (thrown? IllegalArgumentException ((:import (composite items)) (vec (range 0 (+ (count result) 1))) )))
+      (is (thrown? IllegalArgumentException ((:import (composite items)) (vec (range 0 (- (count result) 1))) )))
+      (is (= ((:export (composite [])) {}) []))
+      (is (= ((:import (composite [])) []) {}))
+      (is (= (:length (composite [])) 0))
+      (is (= ((:export (composite items)) data) result))
+      (is (= ((:import (composite items)) result) data))
+      (is (= (:length (composite items)) (count result))) ))
