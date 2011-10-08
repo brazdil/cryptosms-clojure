@@ -3,15 +3,33 @@
 
 (defrecord ExportableType [export import length])
 
-; UNSIGNED INTEGERS
+; CONVERT TO BYTE ARRAY
+
+(with-test
+  (defn
+    export [exportable data]
+      (byte-array (map #(byte (if (> % 127) (- % 256) %)) ((:export exportable) data))) ))
+
+; UNSIGNED INTEGERS (slow but safe)
+
+(defn- pow [base exp]
+  (letfn 
+    [(kapow [base exp acc]
+      (if (zero? exp)
+        acc
+        (recur base (dec exp) (* base acc))))]
+    (kapow base exp 1)))
 
 (with-test
   (defn- 
     ^{:doc "get-integer-byte [x i] returns the i-th byte in binary representation of unsigned integer x (max 64-bit)" }
     get-integer-byte [^Number x ^Number i]
-      (if (or (> i 7) (< i 0))
-        0
-        (bit-and (bit-shift-right (long x) (* i 8)) 0xFF)))
+      (if (or (< x 0) (> i 7) (< i 0))
+        (throw (new IllegalArgumentException))
+        (bit-and (quot x (pow 2 (* i 8))) 0xFF)))
+  (is (thrown? IllegalArgumentException (get-integer-byte -1 0)))
+  (is (thrown? IllegalArgumentException (get-integer-byte 2 -1)))
+  (is (thrown? IllegalArgumentException (get-integer-byte 18446744073709551616 8)))
   (is (= (get-integer-byte 0 0) 0))
   (is (= (get-integer-byte 1 0) 1))
   (is (= (get-integer-byte 1 1) 0))
@@ -21,47 +39,35 @@
   (is (= (get-integer-byte 256 1) 1))
   (is (= (get-integer-byte 65534 0) 254))
   (is (= (get-integer-byte 65534 1) 255))
-  (is (= (get-integer-byte -1 0) 255))
-  (is (= (get-integer-byte -2 0) 254))
-  (is (not= (get-integer-byte 65536 6) 1))
-  (is (= (get-integer-byte 2 -2) 0))
-  (is (= (get-integer-byte 18446744073709551616 8) 0)))
+  (is (not= (get-integer-byte 65536 6) 1)))
 
 (with-test
   (defn-
     ^{:doc "get-integer-bytes [x i] returns the i-byte binary representation of unsigned integer x" }
     get-integer-bytes [^Number x ^Number len]
-    (loop [rem len
-           accu []]
-      (if (<= rem 0)
-        accu
-        (recur (dec rem) 
-               (conj accu (get-integer-byte x (- rem 1)))))))
-  (is (= (get-integer-bytes 0 -1) []))
+    (if (< len 0)
+      (throw (new IllegalArgumentException))
+      (loop [rem len
+             accu []]
+        (if (<= rem 0)
+          accu
+          (recur (dec rem) 
+                 (conj accu (get-integer-byte x (- rem 1))))))))
+  (is (thrown? IllegalArgumentException (get-integer-bytes -1 1)))
+  (is (thrown? IllegalArgumentException (get-integer-bytes 0 -1)))
   (is (= (get-integer-bytes 0 0) []))
   (is (= (get-integer-bytes 1 0) []))
   (is (= (get-integer-bytes 0 1) [0]))
   (is (= (get-integer-bytes 1 1) [1]))
   (is (= (get-integer-bytes 255 1) [255]))
   (is (= (get-integer-bytes 256 1) [0]))
-  (is (= (get-integer-bytes -1 1) [255]))
-  (is (= (get-integer-bytes -2 1) [254]))
   (is (= (get-integer-bytes 0 2) [0 0]))
   (is (= (get-integer-bytes 1 2) [0 1]))
   (is (= (get-integer-bytes 255 2) [0 255]))
   (is (= (get-integer-bytes 256 2) [1 0]))
   (is (= (get-integer-bytes 65535 2) [255 255]))
   (is (= (get-integer-bytes 65536 2) [0 0]))
-  (is (= (get-integer-bytes -1 2) [255 255]))
-  (is (= (get-integer-bytes -2 2) [255 254])))
-
-(defn- pow [base exp]
-  (letfn 
-    [(kapow [base exp acc]
-      (if (zero? exp)
-        acc
-        (recur base (dec exp) (* base acc))))]
-    (kapow base exp 1)))
+  (is (= (get-integer-bytes 0xFFFFFFFFFFFFFFFF 8) [255 255 255 255 255 255 255 255])))
 
 (with-test
   ^{:doc "parse-integer-bytes [xs] returns an integer which is represented by a given byte-array" }
@@ -85,7 +91,8 @@
   (is (= (parse-integer-bytes [255]) 255))
   (is (= (parse-integer-bytes [1 1]) 257))
   (is (= (parse-integer-bytes [1 1 1]) 65793))
-  (is (= (parse-integer-bytes [2 1 1 1]) 33620225)))
+  (is (= (parse-integer-bytes [2 1 1 1]) 33620225))
+  (is (= (parse-integer-bytes [255 255 255 255 255 255 255 255]) 0xFFFFFFFFFFFFFFFF)))
 
 (with-test
   (defn- 
@@ -177,3 +184,15 @@
     (is (= (subvec ((:export (align 128 item)) data) 0 8 ) result))
     (is (= ((:import (align 16 item)) result-aligned) data))
     (is (= (:length (align 128 item)) 128)) ))
+
+; SAMPLE
+
+(def structure
+  (align 32
+    (composite [
+      (uint16 :ushort1)
+      (uint16 :ushort2)
+      (uint32 :uint1)
+      (uint64 :ulong1) ])))
+
+(def data { :ushort1 0xFFFF, :ushort2 0xAAAA, :uint1 0x10203040, :ulong1 0x0102030405060708 } )
