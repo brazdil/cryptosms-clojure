@@ -1,15 +1,16 @@
-(ns uk.ac.cam.db538.cryptosms.low-level.data-types
+(ns uk.ac.cam.db538.cryptosms.low-level.export
   (:use clojure.test))
 
 (defrecord ExportableType [export import length])
 
 ; CONVERT TO BYTE ARRAY
 
-(with-test
-  (defn
-    export [exportable data]
-      (byte-array (map #(byte (if (> % 127) (- % 256) %)) ((:export exportable) data))) ))
-
+(defn output [exportable data]
+  (byte-array (map #(byte (if (> % 127) (- % 256) %)) ((:export exportable) data))) )
+    
+(defn input [exportable ^bytes xs]
+  ((:import exportable) (vec (map #(if (< % 0) (+ % 256) %) (vec xs)))))
+  
 ; UNSIGNED INTEGERS (slow but safe)
 
 (defn- pow [base exp]
