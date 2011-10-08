@@ -119,7 +119,11 @@
 
 ; COMPOSITE
 
-;(defn composite [& exportables]
-;  (ExportableType.
-;    ; export
-;    (fn [data] 
+(defn composite [exportables]
+  (ExportableType.
+    ; export
+    (fn [data] (reduce #(reduce conj %1 %2) [] (map #((:export %) data) exportables)))
+    ; import
+    nil
+    ; length
+    nil))
