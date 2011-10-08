@@ -119,6 +119,7 @@
 
 ; COMPOSITE
 
+; TODO: test
 (defn composite [exportables]
   (ExportableType.
     ; export
@@ -126,4 +127,4 @@
     ; import
     nil
     ; length
-    nil))
+    (fn [] (reduce + 0 (map #((:length %)) exportables)))))
