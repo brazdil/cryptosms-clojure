@@ -12,7 +12,7 @@ import java.security.SecureRandom;
 
 import uk.ac.cam.db538.cryptosms.utils.Numeric;
 
-public class BouncyCastle implements ICryptography {
+public class BouncyCastle  {
 	
 	private static SecureRandom sRandom = null;
 	
@@ -45,13 +45,13 @@ public class BouncyCastle implements ICryptography {
 //		return result;
 //	}
 
-	@Override
-	public byte[] encryptAES_CBC(byte[] data, SymmetricKey key) {
+//	@Override
+//	public byte[] encryptAES_CBC(byte[] data, SymmetricKey key) {
 //		AESFastEngine aes = new AESFastEngine();
 //		CBCBlockCipher cbc = new CBCBlockCipher(aes);
 //		
 //		cbc.init(true, new ParametersWithIV(new KeyParameter(key.getBytes()), getRandomBytes(cbc.getBlockSize())));
 //		return getOutcome(cbc, data);
-		return null;
-	}
+//		return null;
+//	}
 }
