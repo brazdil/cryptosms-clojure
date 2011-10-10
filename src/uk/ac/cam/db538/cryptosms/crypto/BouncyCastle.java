@@ -10,11 +10,16 @@ import java.security.SecureRandom;
 //import org.spongycastle.crypto.params.KeyParameter;
 //import org.spongycastle.crypto.params.ParametersWithIV;
 
+import uk.ac.cam.db538.cryptosms.low_level.export.ExportableType;
 import uk.ac.cam.db538.cryptosms.utils.Numeric;
 
 public class BouncyCastle  {
 	
 	private static SecureRandom sRandom = null;
+	
+	private void foo() {
+		uk.ac.cam.db538.cryptosms.low_level.export.ExportableType type = null;
+	}
 	
 //	private SecureRandom getRandom() {
 //		if (sRandom == null)

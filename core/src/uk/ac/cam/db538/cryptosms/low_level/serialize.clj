@@ -1,36 +1,21 @@
-(ns uk.ac.cam.db538.cryptosms.low-level.export
-  (:use clojure.test))
+(ns uk.ac.cam.db538.cryptosms.low-level.serialize
+  (:use [clojure.test :only (with-test, is) ])
+  (:require [uk.ac.cam.db538.cryptosms.crypto.random :as random]))
 
-(defrecord ExportableType [export import length])
+(defrecord Serializable [ export import length ])
 
-; CONVERT TO BYTE ARRAY
-
-(defn byte-output [vector]
-  (byte-array (map #(byte (if (> % 127) (- % 256) %)) vector)) )
-    
-(defn byte-input [^bytes array]
-  (vec (map #(if (< % 0) (+ % 256) %) (vec array))))
-  
-; UNSIGNED INTEGERS (slow but safe)
-
-(defn- pow [base exp]
-  (letfn 
-    [(kapow [base exp acc]
-      (if (zero? exp)
-        acc
-        (recur base (dec exp) (* base acc))))]
-    (kapow base exp 1)))
+; UNSIGNED INTEGERS
 
 (with-test
   (defn- 
-    ^{:doc "get-integer-byte [x i] returns the i-th byte in binary representation of unsigned integer x (max 64-bit)" }
+    ^{:doc "get-integer-byte [x i] returns the i-th byte in binary representation of unsigned integer x (max 63-bit)" }
     get-integer-byte [^Number x ^Number i]
-      (if (or (< x 0) (> i 7) (< i 0))
+      (if (or (< x 0) (> x 0x7FFFFFFFFFFFFFFF) (> i 7) (< i 0))
         (throw (new IllegalArgumentException))
-        (bit-and (quot x (pow 2 (* i 8))) 0xFF)))
+        (bit-and (bit-shift-right (long x) (* i 8)) 0xFF)))
   (is (thrown? IllegalArgumentException (get-integer-byte -1 0)))
   (is (thrown? IllegalArgumentException (get-integer-byte 2 -1)))
-  (is (thrown? IllegalArgumentException (get-integer-byte 18446744073709551616 8)))
+  (is (thrown? IllegalArgumentException (get-integer-byte 2 8)))
   (is (= (get-integer-byte 0 0) 0))
   (is (= (get-integer-byte 1 0) 1))
   (is (= (get-integer-byte 1 1) 0))
@@ -56,6 +41,7 @@
                  (conj accu (get-integer-byte x (- rem 1))))))))
   (is (thrown? IllegalArgumentException (get-integer-bytes -1 1)))
   (is (thrown? IllegalArgumentException (get-integer-bytes 0 -1)))
+  (is (thrown? IllegalArgumentException (get-integer-bytes 0x8FFFFFFFFFFFFFFF 8)))
   (is (= (get-integer-bytes 0 0) []))
   (is (= (get-integer-bytes 1 0) []))
   (is (= (get-integer-bytes 0 1) [0]))
@@ -68,17 +54,19 @@
   (is (= (get-integer-bytes 256 2) [1 0]))
   (is (= (get-integer-bytes 65535 2) [255 255]))
   (is (= (get-integer-bytes 65536 2) [0 0]))
-  (is (= (get-integer-bytes 0xFFFFFFFFFFFFFFFF 8) [255 255 255 255 255 255 255 255])))
+  (is (= (get-integer-bytes 0x7FFFFFFFFFFFFFFF 8) [127 255 255 255 255 255 255 255])))
 
 (with-test
   ^{:doc "parse-integer-bytes [xs] returns an integer which is represented by a given byte-array" }
   (defn- parse-integer-bytes [xs]
-    (loop [xs xs, accu 0, exp 0]
-      (if (empty? xs)
-        accu
-        (if (or (< (peek xs) 0) (> (peek xs) 255))
-          (throw (new IllegalArgumentException))
-          (recur (pop xs) (+ accu (* (peek xs) (pow 2 exp))) (+ exp 8))))))
+    (if (or (> (count xs) 8) (and (= (count xs) 8) (> (xs 0) 127)) )
+      (throw (new IllegalArgumentException))
+      (loop [xs xs, accu (long 0)]
+        (if (empty? xs)
+          accu
+          (if (or (< (xs 0) 0) (> (xs 0) 255))
+            (throw (new IllegalArgumentException))
+            (recur (subvec xs 1) (bit-or (bit-shift-left accu 8) (xs 0))))))))
   (is (= (parse-integer-bytes []) 0))
   (is (thrown? IllegalArgumentException (parse-integer-bytes [-1])))
   (is (thrown? IllegalArgumentException (parse-integer-bytes [256])))
@@ -88,12 +76,14 @@
   (is (thrown? IllegalArgumentException (parse-integer-bytes [1 2 256])))
   (is (thrown? IllegalArgumentException (parse-integer-bytes [1 256 2])))
   (is (thrown? IllegalArgumentException (parse-integer-bytes [256 1 2])))
+  (is (thrown? IllegalArgumentException (parse-integer-bytes [128 1 2 3 4 5 6 7])))
+  (is (thrown? IllegalArgumentException (parse-integer-bytes [1 2 3 4 5 6 7 8 9])))
   (is (= (parse-integer-bytes [1]) 1))
   (is (= (parse-integer-bytes [255]) 255))
   (is (= (parse-integer-bytes [1 1]) 257))
   (is (= (parse-integer-bytes [1 1 1]) 65793))
   (is (= (parse-integer-bytes [2 1 1 1]) 33620225))
-  (is (= (parse-integer-bytes [255 255 255 255 255 255 255 255]) 0xFFFFFFFFFFFFFFFF)))
+  (is (= (parse-integer-bytes [0x7F 0x01 0x02 0x03 0x04 0x05 0x06 0x07]) 0x7f01020304050607)))
 
 (with-test
   (defn- 
@@ -101,7 +91,7 @@
     uint-type-factory [name ^Number len]
     (if (or (< len 1) (> len 8))
       (throw (new IllegalArgumentException))
-      (ExportableType.
+      (Serializable.
         ; export
         (fn [data] (get-integer-bytes (name data) len))
         ; import 
@@ -122,14 +112,14 @@
 (defn uint8 [name] (uint-type-factory name 1))
 (defn uint16 [name] (uint-type-factory name 2))
 (defn uint32 [name] (uint-type-factory name 4))
-(defn uint64 [name] (uint-type-factory name 8))
+(defn uint64 [name] (uint-type-factory name 8)) ; actually just 63-bit :-(
 
 ; COMPOSITE
 
 (with-test
   (defn composite [exportables]
     (let [ composite-length (reduce + 0 (map #(:length %) exportables)) ]
-      (ExportableType.
+      (Serializable.
         ; export
         (fn [data] (reduce #(reduce conj %1 %2) [] (map #((:export %) data) exportables)))
         ; import
@@ -162,9 +152,9 @@
     (let [ length-random (- length-aligned (:length exportable)) ]
       (if (< length-random 0) ; handles negative alignment length as well
         (throw (new IllegalArgumentException))
-        (ExportableType.
+        (Serializable.
           ; export
-          (fn [data] (reduce conj ((:export exportable) data) (vec (repeatedly length-random #(rand-int 256)))))
+          (fn [data] (reduce conj ((:export exportable) data) (random/rand-next length-random) ))
           ; import
           (fn [^bytes xs]
             (if (not= (count xs) length-aligned)
