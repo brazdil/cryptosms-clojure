@@ -3,6 +3,9 @@
 
 ; CONVERT TO BYTE ARRAY
 
+(defn create [^Number len]
+  (byte-array (repeat len (byte 0))))
+  
 (with-test
   (defn output [vector]
     (byte-array 

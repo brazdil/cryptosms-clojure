@@ -5,10 +5,13 @@
 
 (def secure-random (SecureRandom/getInstance "SHA1PRNG" "SUN"))
 
+(defn rand-next-bytes [ ^Number len ]
+    (let [ array (byte-arrays/create len) ]
+      (. secure-random nextBytes array)
+      array))
+  
 (with-test
   (defn rand-next [ ^Number len ]
-    (let [ array (byte-array (repeat len (byte 0))) ]
-      (. secure-random nextBytes array)
-      (byte-arrays/input array)))
-  (is (= (count (rand-next 100)) 100))
+      (byte-arrays/input (rand-next-bytes len)))
+  (is (= (count (rand-next 10)) 10))
   (is (= (rand-next 0) [])))
