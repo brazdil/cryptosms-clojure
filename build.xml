@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="CryptoSMS" default="help">
 
+    <property name="dir.core" value="core/"/>
+    <property name="dir.android" value="android/"/>
+    <property name="dir.android.libs" value="${dir.android}/libs/"/>
+    <property name="cmd.lein" value="lein"/>
+    <property name="jar.core" value="cryptosms-core-withdeps.jar"/>
+
 <!-- The local.properties file is created and updated by the 'android'
      tool.
      It contains the path to the SDK. It should *NOT* be checked into
@@ -47,20 +53,42 @@
 
 <!-- extension targets. Uncomment the ones where you want to do custom work
      in between standard targets -->
-<!--
-    <target name="-pre-build">
+     
+    <target name="core-clean">
+        <exec dir="${dir.core}" executable="${cmd.lein}">
+            <arg value="clean" />
+        </exec>
+        <delete file="${dir.android.lib}/${jar.core}" />
     </target>
+    
+    <target name="core-jar" depends="core-clean">
+        <exec dir="${dir.core}" executable="${cmd.lein}">
+            <arg value="uberjar" />
+        </exec>
+        <copy file="${dir.core}/${jar.core}" todir="${dir.android.libs}" />
+    </target>
+
+    <target name="core-test" depends="core-clean">
+        <exec dir="${dir.core}" executable="${cmd.lein}">
+            <arg value="test" />
+        </exec>
+    </target>
+
+    <target name="-pre-build" depends="core-jar">
+    </target>
+    
     <target name="-pre-compile">
     </target>
 
+<!--
     [This is typically used for code obfuscation.
      Compiled code location: ${out.classes.absolute.dir}
      If this is not done in place, override ${out.dex.input.absolute.dir}]
+-->
     <target name="-post-compile">
     </target>
--->
 
-    <target name="-post-compile">
+    <target name="test" depends="core-test">
     </target>
 
     <!-- Execute the Android Setup task that will setup some properties
