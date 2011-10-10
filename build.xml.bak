@@ -1,0 +1,35 @@
+<project name="CryptoSMS" basedir="." default="main">
+
+  <property name="dir.core" value="core/"/>
+  <property name="dir.android" value="android/"/>
+  <property name="dir.android.lib" value="${dir.android}/lib/"/>
+  <property name="cmd.lein" value="lein"/>
+  <property name="jar.core" value="cryptosms-core-withdeps.jar"/>
+
+  <target name="clean-core">
+    <exec dir="${dir.core}" executable="${cmd.lein}">
+      <arg value="clean" />
+    </exec>
+    <delete file="${dir.android.lib}/${jar.core}" />
+  </target>
+  
+  <target name="jar-core">
+    <exec dir="${dir.core}" executable="${cmd.lein}">
+      <arg value="uberjar" />
+    </exec>
+    <copy file="${dir.core}/${jar.core}" todir="${dir.android.lib}" />
+  </target>
+
+  <target name="apk-android" depends="jar-core">
+    <ant dir="${dir.android}" target="release" />
+  </target>
+  
+  <target name="clean-android">
+    <ant dir="${dir.android}" target="clean" />
+  </target>
+
+  <target name="clean" depends="clean-android,clean-core" />
+  
+  <target name="main" depends="clean,apk-android"/>
+
+</project>
