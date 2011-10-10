@@ -5,11 +5,11 @@
 
 ; CONVERT TO BYTE ARRAY
 
-(defn output [exportable data]
-  (byte-array (map #(byte (if (> % 127) (- % 256) %)) ((:export exportable) data))) )
+(defn byte-output [vector]
+  (byte-array (map #(byte (if (> % 127) (- % 256) %)) vector)) )
     
-(defn input [exportable ^bytes xs]
-  ((:import exportable) (vec (map #(if (< % 0) (+ % 256) %) (vec xs)))))
+(defn byte-input [^bytes array]
+  (vec (map #(if (< % 0) (+ % 256) %) (vec array))))
   
 ; UNSIGNED INTEGERS (slow but safe)
 
@@ -136,13 +136,10 @@
         (fn [^bytes xs] 
           (if (not= (count xs) composite-length)
             (throw (new IllegalArgumentException))
-            (loop [ items exportables
-                    xs xs
-                    lengths (vec (map #(:length %) exportables))
-                    accu {} ]
-              (if (empty? xs)
-                accu
-                (recur (subvec items 1) (subvec xs (lengths 0)) (subvec lengths 1) (conj accu ((:import (items 0)) (subvec xs 0 (lengths 0))))) ))))
+            (let [ offsets (vec (reductions + 0 (map #(:length %) exportables))) ; offsets of items (e.g [ 0 2 6 ] for uin16 and uint32 - last is ignored!!!)
+                   ends (subvec offsets 1) ; offsets of following items, e.g [ 2 6 ] as in previous line
+                   subvecs (map #(subvec xs %1 %2) offsets ends) ] ; subvectors passed to individual items
+              (reduce conj {} (map #((:import %1) %2) exportables subvecs)))))
         ; length
         composite-length )))
     (let [ items [ (uint8 :item1) (uint16 :item2) (uint32 :item3) (uint64 :item4) ]

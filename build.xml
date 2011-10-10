@@ -19,11 +19,17 @@
     </exec>
     <copy file="${dir.core}/${jar.core}" todir="${dir.android.lib}" />
   </target>
+
+  <target name="apk-android" depends="jar-core">
+    <ant dir="${dir.android}" target="release" />
+  </target>
   
-  <target name="clean" depends="clean-core" />
+  <target name="clean-android">
+    <ant dir="${dir.android}" target="clean" />
+  </target>
+
+  <target name="clean" depends="clean-android,clean-core" />
   
-  <target name="jar" depends="jar-core" />
-  
-  <target name="main" depends="clean,jar"/>
+  <target name="main" depends="clean,apk-android"/>
 
 </project>
