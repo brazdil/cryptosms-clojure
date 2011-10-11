@@ -3,9 +3,13 @@
   (:require [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays]))
 
 (defn outcome [ cipher data ]
-  (let [ length-expected (utils/least-greater-multiple (count data) (. cipher getBlockSize))
-         data-result (byte-arrays/create length-expected)
-         data-bytes (byte-arrays/output data)
-         length-actual (. cipher processBlock data-bytes 0 data-result 0) ]
-    (if (= length-expected length-actual)
-      (byte-arrays/input data-result))))
+  (let [ block-size        (. cipher getBlockSize)
+         length-expected   (utils/least-greater-multiple (count data) block-size)
+         data-result       (byte-arrays/create length-expected)
+         data-bytes        (byte-arrays/output data) ]
+    (loop [ off 0 ]
+      (if (>= off length-expected)
+        (byte-arrays/input data-result)
+        (if (not= (. cipher processBlock data-bytes off data-result off) block-size)
+          nil ; error
+          (recur (+ off block-size)))))));
