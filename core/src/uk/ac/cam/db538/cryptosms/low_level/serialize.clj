@@ -1,6 +1,8 @@
 (ns uk.ac.cam.db538.cryptosms.low-level.serialize
   (:use [clojure.test :only (with-test, is) ])
-  (:require [uk.ac.cam.db538.cryptosms.crypto.random :as random]))
+  (:require [uk.ac.cam.db538.cryptosms.crypto.random :as random]
+            [uk.ac.cam.db538.cryptosms.crypto.aes :as aes]
+            [uk.ac.cam.db538.cryptosms.utils :as utils]))
 
 (defrecord Serializable [ export import length ])
 

@@ -12,28 +12,30 @@
 
 ; encrypt/decrypt tested both together below
 
+(def cipher-aes-cbc (new CBCBlockCipher (new AESFastEngine)))
+(def block-size-aes-cbc (. cipher-aes-cbc getBlockSize))
+
 (defn encrypt-aes-cbc [ data crypto-key crypto-iv ]
-  (let [ cipher (new CBCBlockCipher (new AESFastEngine))
-         iv-bytes (if (nil? crypto-iv) (random/rand-next-bytes (. cipher getBlockSize)) (byte-arrays/output crypto-iv)) ]
-    (. cipher init true 
+  (let [ iv-bytes (if (nil? crypto-iv) (random/rand-next-bytes block-size-aes-cbc) (byte-arrays/output crypto-iv)) ]
+    (. cipher-aes-cbc init true 
       (new ParametersWithIV 
-        (new KeyParameter (byte-arrays/output crypto-key)) 
+        (new KeyParameter crypto-key)
         iv-bytes))
-    (block-cipher/outcome cipher data)))
+    (block-cipher/outcome cipher-aes-cbc data)))
 
 (defn decrypt-aes-cbc [ data crypto-key crypto-iv ]
-  (let [ cipher (new CBCBlockCipher (new AESFastEngine))
-         iv-bytes (byte-arrays/output crypto-iv) ]
-    (. cipher init false 
+  (let [ iv-bytes (byte-arrays/output crypto-iv) ]
+    (. cipher-aes-cbc init false 
       (new ParametersWithIV 
-        (new KeyParameter (byte-arrays/output crypto-key)) 
+        (new KeyParameter crypto-key)
         iv-bytes))
-    (block-cipher/outcome cipher data)))
+    (block-cipher/outcome cipher-aes-cbc data)))
 
 (with-test
   (defn- test-aes-cbc [ data crypto-key crypto-iv result ]
-    (is (= (encrypt-aes-cbc data crypto-key crypto-iv) result))
-    (is (= (decrypt-aes-cbc result crypto-key crypto-iv) data)))
+    (let [ crypto-key-bytes (byte-arrays/output crypto-key)]
+      (is (= (encrypt-aes-cbc data crypto-key-bytes crypto-iv) result))
+      (is (= (decrypt-aes-cbc result crypto-key-bytes crypto-iv) data))))
   (let [ 
          key-128   (HEX "2b7e151628aed2a6abf7158809cf4f3c")
          key-192   (HEX "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b")
@@ -92,7 +94,7 @@
     (test-aes-cbc (HEX "91fbef2d15a97816060bee1feaa49afe") key-256 iv (HEX "1bc704f1bce135ceb810341b216d7abe")) )
  ; 256-bit, 1 block, changing key
  (let [
-        data    (HEX "00000000000000000000000000000000") 
+        data    (HEX "00000000000000000000000000000000")
         iv      (HEX "00000000000000000000000000000000")
       ]
    (test-aes-cbc data (HEX "c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558") iv (HEX "46f2fb342d6f0ab477476fc501242c5f"))
