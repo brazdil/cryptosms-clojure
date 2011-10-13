@@ -1,5 +1,6 @@
 (ns uk.ac.cam.db538.cryptosms.utils
-  (:use [clojure.test :only (with-test, is) ]))
+  (:use [clojure.test :only (with-test, is) ])
+  (:require [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays] ))
   
 ; debugging parts of expressions
 (defmacro dbg [x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
@@ -59,4 +60,11 @@
   (is (= (HEX []) ""))
   (is (= (HEX [255] ) "ff"))
   (is (= (HEX [0x12 0x34]) "1234")))
+
+(defn ASCII [ ascii ]
+  (if (string? ascii)
+    (byte-arrays/input (. ascii getBytes "US-ASCII"))
+    (if (vector? ascii)
+      (new String (byte-arrays/output ascii) "US-ASCII")
+      (throw (new IllegalArgumentException)))))
       

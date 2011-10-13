@@ -17,6 +17,7 @@
 
 (defn encrypt-aes-cbc [ data crypto-key crypto-iv ]
   (let [ iv-bytes (if (nil? crypto-iv) (random/rand-next-bytes block-size-aes-cbc) (byte-arrays/output crypto-iv)) ]
+    (. cipher-aes-cbc reset)
     (. cipher-aes-cbc init true 
       (new ParametersWithIV 
         (new KeyParameter crypto-key)
@@ -25,6 +26,7 @@
 
 (defn decrypt-aes-cbc [ data crypto-key crypto-iv ]
   (let [ iv-bytes (byte-arrays/output crypto-iv) ]
+    (. cipher-aes-cbc reset)
     (. cipher-aes-cbc init false 
       (new ParametersWithIV 
         (new KeyParameter crypto-key)
