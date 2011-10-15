@@ -5,14 +5,18 @@
 
 (def secure-random (ref (SecureRandom/getInstance "SHA1PRNG" "SUN")))
 
-(defn rand-next-bytes [ ^Number len ]
+(defn rand-next-bytes 
+  "Generates a Java byte array of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."
+  [ ^Number len ]
   (dosync
     (let [ array (byte-arrays/create len) ]
       (. @secure-random nextBytes array)
       array)))
   
 (with-test
-  (defn rand-next [ ^Number len ]
-      (byte-arrays/input (rand-next-bytes len)))
+  (defn rand-next 
+    "Generates a vector of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."
+    [ ^Number len ]
+    (byte-arrays/input (rand-next-bytes len)))
   (is (= (count (rand-next 10)) 10))
   (is (= (rand-next 0) [])))

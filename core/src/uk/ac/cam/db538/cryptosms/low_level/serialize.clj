@@ -112,15 +112,28 @@
   (is (= ((:import (uint-type-factory :test 3)) [ 0xAB 0xCD 0xEF ]) {:test 0xABCDEF}))
   (is (= (:length (uint-type-factory :test 3)) 3)))
 
-(defn uint8 [name] (uint-type-factory name 1))
-(defn uint16 [name] (uint-type-factory name 2))
-(defn uint32 [name] (uint-type-factory name 4))
-(defn uint64 [name] (uint-type-factory name 8)) ; actually just 63-bit :-(
+(defn uint8 
+  "Returns a serializable type for 8-bit unsigned integer"
+  [name] (uint-type-factory name 1))
+  
+(defn uint16
+  "Returns a serializable type for 16-bit unsigned integer"
+  [name] (uint-type-factory name 2))
+
+(defn uint32
+  "Returns a serializable type for 32-bit unsigned integer"
+  [name] (uint-type-factory name 4))
+
+(defn uint64
+  "Returns a serializable type for 63-bit (!!!) unsigned integer"
+  [name] (uint-type-factory name 8))
 
 ; COMPOSITE
 
 (with-test
-  (defn composite [exportables]
+  (defn composite 
+    "Returns a serializable type combining together list of other serializables."
+    [exportables]
     (let [ composite-length (reduce + 0 (map #(:length %) exportables)) ]
       (Serializable.
         ; export
@@ -151,7 +164,9 @@
 ; ALIGN
 
 (with-test
-  (defn align [^Number length-aligned exportable]
+  (defn align
+    "Returns a serializable type which aligns given serializable to given length."
+    [^Number length-aligned exportable]
     (let [ length-random (- length-aligned (:length exportable)) ]
       (if (< length-random 0) ; handles negative alignment length as well
         (throw (new IllegalArgumentException))

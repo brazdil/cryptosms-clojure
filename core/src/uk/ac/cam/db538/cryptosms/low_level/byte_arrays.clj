@@ -3,11 +3,15 @@
 
 ; CONVERT TO BYTE ARRAY
 
-(defn create [^Number len]
+(defn create 
+  "Creates a Java byte array of given length."
+  [^Number len]
   (byte-array (repeat len (byte 0))))
   
 (with-test
-  (defn output [vector]
+  (defn output 
+    "Turns a Clojure vector into Java byte array. Expects the Clojure vector to contain unsigned bytes (numbers between 0-255)."
+    [vector]
     (byte-array 
       (map #(byte 
 				(if (or (< % 0) (> % 255))
@@ -20,7 +24,9 @@
 	(is (= (vec (output [ 255 254 253 ])) [ -1 -2 -3 ])) )
 
 (with-test
-  (defn input [^bytes array]
+  (defn input 
+    "Turns a Java byte array into a Clojure vector. Produces vector with unsigned integers (numbers between 0-255)."
+    [^bytes array]
 	  (vec (map #(if (< % 0) (+ % 256) %) (vec array))))
   (is (= (input (byte-array (map #(byte %) [ 0 1 2 3 ]))) [ 0 1 2 3 ]))
   (is (= (input (byte-array (map #(byte %) [ -1 -2 -3 ]))) [ 255 254 253 ])) ) 

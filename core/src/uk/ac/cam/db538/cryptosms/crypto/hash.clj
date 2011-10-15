@@ -9,7 +9,9 @@
 (def length-sha256 (dosync (. @digest-sha256 getDigestSize)))
 
 (with-test
-  (defn hash-sha256 [ data ]
+  (defn hash-sha256 
+    "Returns SHA-256 hash of given data. Data is a vector with uint8 elements."
+    [ data ]
     (dosync
       (let [ data-bytes    (byte-arrays/output data)
              data-length   (count data) 

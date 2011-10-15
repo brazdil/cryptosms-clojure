@@ -13,10 +13,14 @@
 
 ; encrypt/decrypt tested both together below
 
+; global AES/CBC object
 (def cipher-aes-cbc (ref (new CBCBlockCipher (new AESFastEngine))))
 (def block-size-aes-cbc (dosync (. @cipher-aes-cbc getBlockSize)))
 
-(defn encrypt-aes-cbc [ data crypto-key crypto-iv ]
+(defn encrypt-aes-cbc
+  "Encrypts given data with AES/CBC under given key and using given IV.
+   Data and IV are Clojure vectors, key is Java byte array."
+  [ data crypto-key crypto-iv ]
   (dosync 
     (. @cipher-aes-cbc reset)
     (. @cipher-aes-cbc init true 
@@ -25,7 +29,10 @@
         (byte-arrays/output crypto-iv)))
     (block-cipher/outcome @cipher-aes-cbc data) ))
 
-(defn decrypt-aes-cbc [ data crypto-key crypto-iv ]
+(defn decrypt-aes-cbc 
+  "Decrypts given data with AES/CBC under given key and using given IV.
+   Data and IV are Clojure vectors, key is Java byte array."
+  [ data crypto-key crypto-iv ]
   (dosync
     (let [ iv-bytes (byte-arrays/output crypto-iv) ]
       (. @cipher-aes-cbc reset)

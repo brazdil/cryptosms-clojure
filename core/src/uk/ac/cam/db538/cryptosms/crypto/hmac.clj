@@ -11,7 +11,9 @@
 (def length-hmac-sha256 (dosync (. @crypto-hmac-sha256 getMacSize)))
 
 (with-test
-  (defn hmac-sha256 [ data crypto-key ]
+  (defn hmac-sha256 
+    "Returns a HMAC-SHA-256 for given data and key. Data is a vector, key is Java byte-array."
+    [ data crypto-key ]
     (dosync
       (let [ data-bytes    (byte-arrays/output data) 
              data-length   (count data)
