@@ -13,7 +13,8 @@
 
 (with-test
   (defn aes-cbc-sha1 
-    "Returns a serializable type encrypting/decrypting data (other serializable) with AES/CBC/HMAC-SHA1 under given crypto key (Java byte array stored in passed in data/args).
+    "Returns a serializable type encrypting/decrypting data (other serializable) with AES/CBC/HMAC-SHA1 
+     under given crypto key (Java byte array stored in passed in data/args).
      Crypto key can be 128, 192 or 256 bits long."
     [key-name serializable]
     (let [ length-data-aligned    (utils/least-greater-multiple (:length serializable) aes/block-size-aes-cbc) 
