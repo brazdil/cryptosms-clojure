@@ -7,19 +7,20 @@
   (:import (org.spongycastle.crypto.macs HMac)
            (org.spongycastle.crypto.params KeyParameter) ))
   
-(def crypto-hmac-sha256 (new HMac hash/digest-sha256))
-(def length-hmac-sha256 (. crypto-hmac-sha256 getMacSize))
+(def crypto-hmac-sha256 (ref (dosync (new HMac @hash/digest-sha256))))
+(def length-hmac-sha256 (dosync (. @crypto-hmac-sha256 getMacSize)))
 
 (with-test
   (defn hmac-sha256 [ data crypto-key ]
-    (let [ data-bytes    (byte-arrays/output data) 
-           data-length   (count data)
-           result-bytes  (byte-arrays/create length-hmac-sha256) ]
-      (. crypto-hmac-sha256 reset)
-      (. crypto-hmac-sha256 init (new KeyParameter crypto-key))
-      (. crypto-hmac-sha256 update data-bytes 0 data-length)
-      (. crypto-hmac-sha256 doFinal result-bytes 0)
-      (byte-arrays/input result-bytes)))
+    (dosync
+      (let [ data-bytes    (byte-arrays/output data) 
+             data-length   (count data)
+             result-bytes  (byte-arrays/create length-hmac-sha256) ]
+        (. @crypto-hmac-sha256 reset)
+        (. @crypto-hmac-sha256 init (new KeyParameter crypto-key))
+        (. @crypto-hmac-sha256 update data-bytes 0 data-length)
+        (. @crypto-hmac-sha256 doFinal result-bytes 0)
+        (byte-arrays/input result-bytes))))
   ; tests from http://tools.ietf.org/html/rfc4231
   (is (= (hmac-sha256 
            (HEX "4869205468657265") 

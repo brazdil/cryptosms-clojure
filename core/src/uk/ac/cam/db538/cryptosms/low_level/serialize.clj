@@ -9,12 +9,12 @@
 ; UNSIGNED INTEGERS
 
 (with-test
-  (defn- 
-    ^{:doc "get-integer-byte [x i] returns the i-th byte in binary representation of unsigned integer x (max 63-bit)" }
-    get-integer-byte [^Number x ^Number i]
-      (if (or (< x 0) (> x 0x7FFFFFFFFFFFFFFF) (> i 7) (< i 0))
-        (throw (new IllegalArgumentException))
-        (bit-and (bit-shift-right (long x) (* i 8)) 0xFF)))
+  (defn- get-integer-byte
+    "get-integer-byte [x i] returns the i-th byte in binary representation of unsigned integer x (max 63-bit)"
+    [^Number x ^Number i]
+    (if (or (< x 0) (> x 0x7FFFFFFFFFFFFFFF) (> i 7) (< i 0))
+      (throw (new IllegalArgumentException))
+      (bit-and (bit-shift-right (long x) (* i 8)) 0xFF)))
   (is (thrown? IllegalArgumentException (get-integer-byte -1 0)))
   (is (thrown? IllegalArgumentException (get-integer-byte 2 -1)))
   (is (thrown? IllegalArgumentException (get-integer-byte 2 8)))
@@ -30,9 +30,9 @@
   (is (not= (get-integer-byte 65536 6) 1)))
 
 (with-test
-  (defn-
-    ^{:doc "get-integer-bytes [x i] returns the i-byte binary representation of unsigned integer x" }
-    get-integer-bytes [^Number x ^Number len]
+  (defn- get-integer-bytes
+    "get-integer-bytes [x i] returns the i-byte binary representation of unsigned integer x"
+    [^Number x ^Number len]
     (if (< len 0)
       (throw (new IllegalArgumentException))
       (loop [rem len
@@ -59,8 +59,9 @@
   (is (= (get-integer-bytes 0x7FFFFFFFFFFFFFFF 8) [127 255 255 255 255 255 255 255])))
 
 (with-test
-  ^{:doc "parse-integer-bytes [xs] returns an integer which is represented by a given byte-array" }
-  (defn- parse-integer-bytes [xs]
+  (defn- parse-integer-bytes 
+    "parse-integer-bytes [xs] returns an integer which is represented by a given byte-array"
+    [xs]
     (if (or (> (count xs) 8) (and (= (count xs) 8) (> (xs 0) 127)) )
       (throw (new IllegalArgumentException))
       (loop [xs xs, accu (long 0)]
@@ -88,9 +89,9 @@
   (is (= (parse-integer-bytes [0x7F 0x01 0x02 0x03 0x04 0x05 0x06 0x07]) 0x7f01020304050607)))
 
 (with-test
-  (defn- 
-    ^{:doc "uint-type-factory [len] returns an exportable type for unsigned integer with given byte length" }
-    uint-type-factory [name ^Number len]
+  (defn- uint-type-factory
+    "uint-type-factory [len] returns an exportable type for unsigned integer with given byte length"
+    [name ^Number len]
     (if (or (< len 1) (> len 8))
       (throw (new IllegalArgumentException))
       (Serializable.

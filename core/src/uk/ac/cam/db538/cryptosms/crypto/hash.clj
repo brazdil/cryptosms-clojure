@@ -5,18 +5,19 @@
             [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays] )
   (:import (org.spongycastle.crypto.digests SHA256Digest) ))
 
-(def digest-sha256 (new SHA256Digest))
-(def length-sha256 (. digest-sha256 getDigestSize))
+(def digest-sha256 (ref (new SHA256Digest)))
+(def length-sha256 (dosync (. @digest-sha256 getDigestSize)))
 
 (with-test
   (defn hash-sha256 [ data ]
-    (let [ data-bytes    (byte-arrays/output data)
-           data-length   (count data) 
-           result-bytes  (byte-arrays/create length-sha256) ]
-      (. digest-sha256 reset)
-      (. digest-sha256 update data-bytes 0 data-length)
-      (. digest-sha256 doFinal result-bytes 0)
-      (byte-arrays/input result-bytes)))
+    (dosync
+      (let [ data-bytes    (byte-arrays/output data)
+             data-length   (count data) 
+             result-bytes  (byte-arrays/create length-sha256) ]
+        (. @digest-sha256 reset)
+        (. @digest-sha256 update data-bytes 0 data-length)
+        (. @digest-sha256 doFinal result-bytes 0)
+        (byte-arrays/input result-bytes))))
   (is (= (hash-sha256 (ASCII "The quick brown fox jumps over the lazy dog") ) (HEX "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592")))
   (is (= (hash-sha256 (ASCII "The quick brown fox jumps over the lazy dog.") ) (HEX "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")))
   ; from NESSIE test vectors

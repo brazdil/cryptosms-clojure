@@ -13,26 +13,27 @@
 
 ; encrypt/decrypt tested both together below
 
-(def cipher-aes-cbc (new CBCBlockCipher (new AESFastEngine)))
-(def block-size-aes-cbc (. cipher-aes-cbc getBlockSize))
-(def overhead-aes-cbc-sha256 (+ block-size-aes-cbc hmac/length-hmac-sha256))
+(def cipher-aes-cbc (ref (new CBCBlockCipher (new AESFastEngine))))
+(def block-size-aes-cbc (dosync (. @cipher-aes-cbc getBlockSize)))
 
 (defn encrypt-aes-cbc [ data crypto-key crypto-iv ]
-  (. cipher-aes-cbc reset)
-  (. cipher-aes-cbc init true 
-    (new ParametersWithIV 
-      (new KeyParameter crypto-key)
-      (byte-arrays/output crypto-iv)))
-  (block-cipher/outcome cipher-aes-cbc data) )
-
-(defn decrypt-aes-cbc [ data crypto-key crypto-iv ]
-  (let [ iv-bytes (byte-arrays/output crypto-iv) ]
-    (. cipher-aes-cbc reset)
-    (. cipher-aes-cbc init false 
+  (dosync 
+    (. @cipher-aes-cbc reset)
+    (. @cipher-aes-cbc init true 
       (new ParametersWithIV 
         (new KeyParameter crypto-key)
-        iv-bytes))
-    (block-cipher/outcome cipher-aes-cbc data)))
+        (byte-arrays/output crypto-iv)))
+    (block-cipher/outcome @cipher-aes-cbc data) ))
+
+(defn decrypt-aes-cbc [ data crypto-key crypto-iv ]
+  (dosync
+    (let [ iv-bytes (byte-arrays/output crypto-iv) ]
+      (. @cipher-aes-cbc reset)
+      (. @cipher-aes-cbc init false 
+        (new ParametersWithIV 
+          (new KeyParameter crypto-key)
+          iv-bytes))
+      (block-cipher/outcome @cipher-aes-cbc data))))
 
 (with-test
   (defn- test-aes-cbc [ data crypto-key crypto-iv result ]
