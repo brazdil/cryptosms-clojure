@@ -123,7 +123,7 @@
     (let [ composite-length (reduce + 0 (map #(:length %) exportables)) ]
       (Serializable.
         ; export
-        (fn [data] (reduce #(reduce conj %1 %2) [] (map #((:export %) data) exportables)))
+        (fn [data] (persistent! (reduce #(reduce conj! %1 %2) (transient []) (map #((:export %) data) exportables))))
         ; import
         (fn [^bytes xs] 
           (if (not= (count xs) composite-length)
@@ -131,7 +131,7 @@
             (let [ offsets (vec (reductions + 0 (map #(:length %) exportables))) ; offsets of items (e.g [ 0 2 6 ] for uin16 and uint32 - last is ignored!!!)
                    ends (subvec offsets 1) ; offsets of following items, e.g [ 2 6 ] as in previous line
                    subvecs (map #(subvec xs %1 %2) offsets ends) ] ; subvectors passed to individual items
-              (reduce conj {} (map #((:import %1) %2) exportables subvecs)))))
+              (persistent! (reduce conj! (transient {}) (map #((:import %1) %2) exportables subvecs))))))
         ; length
         composite-length )))
     (let [ items [ (uint8 :item1) (uint16 :item2) (uint32 :item3) (uint64 :item4) ]
@@ -156,7 +156,7 @@
         (throw (new IllegalArgumentException))
         (Serializable.
           ; export
-          (fn [data] (reduce conj ((:export exportable) data) (random/rand-next length-random) ))
+          (fn [data] (persistent! (reduce conj! (transient ((:export exportable) data)) (random/rand-next length-random) )))
           ; import
           (fn [^bytes xs]
             (if (not= (count xs) length-aligned)

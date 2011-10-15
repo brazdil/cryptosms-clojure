@@ -4,7 +4,8 @@
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
             [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays]
             [uk.ac.cam.db538.cryptosms.crypto.random :as random]
-            [uk.ac.cam.db538.cryptosms.crypto.block-cipher :as block-cipher])
+            [uk.ac.cam.db538.cryptosms.crypto.block-cipher :as block-cipher]
+            [uk.ac.cam.db538.cryptosms.crypto.hmac :as hmac])
   (:import (org.spongycastle.crypto.engines AESFastEngine)
            (org.spongycastle.crypto.modes CBCBlockCipher)
            (org.spongycastle.crypto.params KeyParameter)
@@ -14,15 +15,15 @@
 
 (def cipher-aes-cbc (new CBCBlockCipher (new AESFastEngine)))
 (def block-size-aes-cbc (. cipher-aes-cbc getBlockSize))
+(def overhead-aes-cbc-sha256 (+ block-size-aes-cbc hmac/length-hmac-sha256))
 
 (defn encrypt-aes-cbc [ data crypto-key crypto-iv ]
-  (let [ iv-bytes (if (nil? crypto-iv) (random/rand-next-bytes block-size-aes-cbc) (byte-arrays/output crypto-iv)) ]
-    (. cipher-aes-cbc reset)
-    (. cipher-aes-cbc init true 
-      (new ParametersWithIV 
-        (new KeyParameter crypto-key)
-        iv-bytes))
-    (block-cipher/outcome cipher-aes-cbc data)))
+  (. cipher-aes-cbc reset)
+  (. cipher-aes-cbc init true 
+    (new ParametersWithIV 
+      (new KeyParameter crypto-key)
+      (byte-arrays/output crypto-iv)))
+  (block-cipher/outcome cipher-aes-cbc data) )
 
 (defn decrypt-aes-cbc [ data crypto-key crypto-iv ]
   (let [ iv-bytes (byte-arrays/output crypto-iv) ]
@@ -35,7 +36,8 @@
 
 (with-test
   (defn- test-aes-cbc [ data crypto-key crypto-iv result ]
-    (let [ crypto-key-bytes (byte-arrays/output crypto-key)]
+    (let [ crypto-key-bytes (byte-arrays/output crypto-key)
+           encrypted-data (encrypt-aes-cbc data crypto-key-bytes crypto-iv) ]
       (is (= (encrypt-aes-cbc data crypto-key-bytes crypto-iv) result))
       (is (= (decrypt-aes-cbc result crypto-key-bytes crypto-iv) data))))
   (let [ 
