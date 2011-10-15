@@ -5,9 +5,59 @@
             [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays]
             [uk.ac.cam.db538.cryptosms.crypto.hash :as hash] )
   (:import (org.spongycastle.crypto.macs HMac)
-           (org.spongycastle.crypto.digests SHA256Digest)
+           (org.spongycastle.crypto.digests SHA1Digest SHA256Digest)
            (org.spongycastle.crypto.params KeyParameter) ))
-  
+
+; HMAC-SHA-1
+
+(def global-hmac-sha1 (new HMac (new SHA1Digest)))
+(def length-hmac-sha1 (locking global-hmac-sha1 (. global-hmac-sha1 getMacSize)))
+
+(with-test
+  (defn hmac-sha1
+    "Returns a HMAC-SHA-1 for given data and key. Data is a vector, key is Java byte-array."
+    [ data crypto-key ]
+    (locking global-hmac-sha1
+      (let [ data-bytes    (byte-arrays/output data) 
+             data-length   (count data)
+             result-bytes  (byte-arrays/create length-hmac-sha1) ]
+        (. global-hmac-sha1 reset)
+        (. global-hmac-sha1 init (new KeyParameter crypto-key))
+        (. global-hmac-sha1 update data-bytes 0 data-length)
+        (. global-hmac-sha1 doFinal result-bytes 0)
+        (byte-arrays/input result-bytes))))
+  ; tests from http://tools.ietf.org/html/rfc2202
+  (is (= (hmac-sha1
+           (ASCII "Hi There")
+           (byte-arrays/output (HEX "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")))
+         (HEX "b617318655057264e28bc0b6fb378c8ef146be00")))
+  (is (= (hmac-sha1
+           (ASCII "what do ya want for nothing?")
+           (byte-arrays/output (ASCII "Jefe")))
+         (HEX "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79")))
+  (is (= (hmac-sha1
+           (vec (repeat 50 0xdd))
+           (byte-arrays/output (HEX "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")))
+         (HEX "125d7342b9ac11cd91a39af48aa17b4f63f175d3")))
+  (is (= (hmac-sha1
+           (vec (repeat 50 0xcd))
+           (byte-arrays/output (HEX "0102030405060708090a0b0c0d0e0f10111213141516171819")))
+         (HEX "4c9007f4026250c6bc8414f9bf50c86c2d7235da")))
+  (is (= (hmac-sha1
+           (ASCII "Test With Truncation")
+           (byte-arrays/output (HEX "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c")))
+         (HEX "4c1a03424b55e07fe7f27be1d58bb9324a9a5a04")))
+  (is (= (hmac-sha1
+           (ASCII "Test Using Larger Than Block-Size Key - Hash Key First")
+           (byte-arrays/output (vec (repeat 80 0xaa))))
+         (HEX "aa4ae5e15272d00e95705637ce8a3b55ed402112")))
+  (is (= (hmac-sha1
+           (ASCII "Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data")
+           (byte-arrays/output (vec (repeat 80 0xaa))))
+         (HEX "e8e99d0f45237d786d6bbaa7965c7808bbff1a91"))) )
+
+; HMAC-SHA-256
+
 (def global-hmac-sha256 (new HMac (new SHA256Digest)))
 (def length-hmac-sha256 (locking global-hmac-sha256 (. global-hmac-sha256 getMacSize)))
 
