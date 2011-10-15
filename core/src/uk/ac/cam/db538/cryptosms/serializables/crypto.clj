@@ -57,4 +57,5 @@
          exported               ((:export crypto-serializable) crypto-data)
          imported               ((:import crypto-serializable) exported crypto-args) ]
     (is (= data imported))
-    (is (thrown? uk.ac.cam.db538.cryptosms.WrongKeyException ((:import crypto-serializable) exported crypto-args-wrong)))))
+    (is (thrown? uk.ac.cam.db538.cryptosms.WrongKeyException ((:import crypto-serializable) exported crypto-args-wrong)))
+    (is (= (count exported) 52)) ))
