@@ -14,33 +14,33 @@
 ; encrypt/decrypt tested both together below
 
 ; global AES/CBC object
-(def cipher-aes-cbc (ref (new CBCBlockCipher (new AESFastEngine))))
-(def block-size-aes-cbc (dosync (. @cipher-aes-cbc getBlockSize)))
+(def global-aes-cbc (new CBCBlockCipher (new AESFastEngine)))
+(def block-size-aes-cbc (locking global-aes-cbc (. global-aes-cbc getBlockSize)))
 
 (defn encrypt-aes-cbc
   "Encrypts given data with AES/CBC under given key and using given IV.
    Data and IV are Clojure vectors, key is Java byte array."
   [ data crypto-key crypto-iv ]
-  (dosync 
-    (. @cipher-aes-cbc reset)
-    (. @cipher-aes-cbc init true 
+  (locking global-aes-cbc 
+    (. global-aes-cbc reset)
+    (. global-aes-cbc init true 
       (new ParametersWithIV 
         (new KeyParameter crypto-key)
         (byte-arrays/output crypto-iv)))
-    (block-cipher/outcome @cipher-aes-cbc data) ))
+    (block-cipher/outcome global-aes-cbc data) ))
 
 (defn decrypt-aes-cbc 
   "Decrypts given data with AES/CBC under given key and using given IV.
    Data and IV are Clojure vectors, key is Java byte array."
   [ data crypto-key crypto-iv ]
-  (dosync
+  (locking global-aes-cbc
     (let [ iv-bytes (byte-arrays/output crypto-iv) ]
-      (. @cipher-aes-cbc reset)
-      (. @cipher-aes-cbc init false 
+      (. global-aes-cbc reset)
+      (. global-aes-cbc init false 
         (new ParametersWithIV 
           (new KeyParameter crypto-key)
           iv-bytes))
-      (block-cipher/outcome @cipher-aes-cbc data))))
+      (block-cipher/outcome global-aes-cbc data))))
 
 (with-test
   (defn- test-aes-cbc [ data crypto-key crypto-iv result ]
