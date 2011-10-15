@@ -1,12 +1,7 @@
-(ns uk.ac.cam.db538.cryptosms.low-level.serialize
+(ns uk.ac.cam.db538.cryptosms.serializables.uint
   (:use [clojure.test :only (with-test, is) ])
-  (:require [uk.ac.cam.db538.cryptosms.crypto.random :as random]
-            [uk.ac.cam.db538.cryptosms.crypto.aes :as aes]
-            [uk.ac.cam.db538.cryptosms.utils :as utils]))
-
-(defrecord Serializable [ export import length ])
-
-; UNSIGNED INTEGERS
+  (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
+            [uk.ac.cam.db538.cryptosms.serializables.common :as common]))
 
 (with-test
   (defn- get-integer-byte
@@ -94,7 +89,7 @@
     [name ^Number len]
     (if (or (< len 1) (> len 8))
       (throw (new IllegalArgumentException))
-      (Serializable.
+      (uk.ac.cam.db538.cryptosms.serializables.common.Serializable.
         ; export
         (fn [data] (get-integer-bytes (name data) len))
         ; import 
@@ -128,77 +123,3 @@
   "Returns a serializable type for 63-bit (!!!) unsigned integer"
   [name] (uint-type-factory name 8))
 
-; COMPOSITE
-
-(with-test
-  (defn composite 
-    "Returns a serializable type combining together list of other serializables."
-    [exportables]
-    (let [ composite-length (reduce + 0 (map #(:length %) exportables)) ]
-      (Serializable.
-        ; export
-        (fn [data] (persistent! (reduce #(reduce conj! %1 %2) (transient []) (map #((:export %) data) exportables))))
-        ; import
-        (fn [^bytes xs] 
-          (if (not= (count xs) composite-length)
-            (throw (new IllegalArgumentException))
-            (let [ offsets (vec (reductions + 0 (map #(:length %) exportables))) ; offsets of items (e.g [ 0 2 6 ] for uin16 and uint32 - last is ignored!!!)
-                   ends (subvec offsets 1) ; offsets of following items, e.g [ 2 6 ] as in previous line
-                   subvecs (map #(subvec xs %1 %2) offsets ends) ] ; subvectors passed to individual items
-              (persistent! (reduce conj! (transient {}) (map #((:import %1) %2) exportables subvecs))))))
-        ; length
-        composite-length )))
-    (let [ items [ (uint8 :item1) (uint16 :item2) (uint32 :item3) (uint64 :item4) ]
-           data { :item1 0x12, :item2 0x1234, :item3 0x12345678, :item4 0x1234567890ABCDEF} 
-           result [ 0x12 0x12 0x34 0x12 0x34 0x56 0x78 0x12 0x34 0x56 0x78 0x90 0xAB 0xCD 0xEF ]
-         ]
-      (is (thrown? IllegalArgumentException ((:import (composite items)) (vec (range 0 (+ (count result) 1))) )))
-      (is (thrown? IllegalArgumentException ((:import (composite items)) (vec (range 0 (- (count result) 1))) )))
-      (is (= ((:export (composite [])) {}) []))
-      (is (= ((:import (composite [])) []) {}))
-      (is (= (:length (composite [])) 0))
-      (is (= ((:export (composite items)) data) result))
-      (is (= ((:import (composite items)) result) data))
-      (is (= (:length (composite items)) (count result))) ))
-
-; ALIGN
-
-(with-test
-  (defn align
-    "Returns a serializable type which aligns given serializable to given length."
-    [^Number length-aligned exportable]
-    (let [ length-random (- length-aligned (:length exportable)) ]
-      (if (< length-random 0) ; handles negative alignment length as well
-        (throw (new IllegalArgumentException))
-        (Serializable.
-          ; export
-          (fn [data] (persistent! (reduce conj! (transient ((:export exportable) data)) (random/rand-next length-random) )))
-          ; import
-          (fn [^bytes xs]
-            (if (not= (count xs) length-aligned)
-              (throw (new IllegalArgumentException))
-              ((:import exportable) (subvec xs 0 (:length exportable)))))
-          ; length
-          length-aligned ))))
-  (let [ item (uint64 :id)
-         data { :id 0x1234567890ABCDEF }
-         result [ 0x12 0x34 0x56 0x78 0x90 0xAB 0xCD 0xEF ]
-         result-aligned [ 0x12 0x34 0x56 0x78 0x90 0xAB 0xCD 0xEF 0xFE 0xDC 0xBA 0x09 0x87 0x65 0x43 0x21 ] ]
-    (is (thrown? IllegalArgumentException (align -1 item)))
-    (is (thrown? IllegalArgumentException (align 7 item)))
-    (is (= (count ((:export (align 128 item)) data)) 128))
-    (is (= (subvec ((:export (align 128 item)) data) 0 8 ) result))
-    (is (= ((:import (align 16 item)) result-aligned) data))
-    (is (= (:length (align 128 item)) 128)) ))
-
-; SAMPLE
-
-(def structure
-  (align 32
-    (composite [
-      (uint16 :ushort1)
-      (uint16 :ushort2)
-      (uint32 :uint1)
-      (uint64 :ulong1) ])))
-
-(def data { :ushort1 0xFFFF, :ushort2 0xAAAA, :uint1 0x10203040, :ulong1 0x0102030405060708 } )
