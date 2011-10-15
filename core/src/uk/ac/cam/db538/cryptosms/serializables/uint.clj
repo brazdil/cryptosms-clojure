@@ -93,7 +93,7 @@
         ; export
         (fn [data] (get-integer-bytes (name data) len))
         ; import 
-        (fn [^bytes xs]
+        (fn [^bytes xs args]
           (if (not= (count xs) len)
             (throw (new IllegalArgumentException))
             {name (parse-integer-bytes xs)}))
@@ -104,7 +104,7 @@
   (is (thrown? IllegalArgumentException (uint-type-factory :test 9)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 10)))
   (is (= ((:export (uint-type-factory :test 3)) {:test 0x123456}) [ 0x12 0x34 0x56 ]))
-  (is (= ((:import (uint-type-factory :test 3)) [ 0xAB 0xCD 0xEF ]) {:test 0xABCDEF}))
+  (is (= ((:import (uint-type-factory :test 3)) [ 0xAB 0xCD 0xEF ] {}) {:test 0xABCDEF}))
   (is (= (:length (uint-type-factory :test 3)) 3)))
 
 (defn uint8 

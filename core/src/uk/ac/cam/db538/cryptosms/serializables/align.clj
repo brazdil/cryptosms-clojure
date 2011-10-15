@@ -8,18 +8,18 @@
 (with-test
   (defn align
     "Returns a serializable type which aligns given serializable to given length."
-    [^Number length-aligned exportable]
-    (let [ length-random (- length-aligned (:length exportable)) ]
+    [^Number length-aligned serializable]
+    (let [ length-random (- length-aligned (:length serializable)) ]
       (if (< length-random 0) ; handles negative alignment length as well
         (throw (new IllegalArgumentException))
         (uk.ac.cam.db538.cryptosms.serializables.common.Serializable.
           ; export
-          (fn [data] (persistent! (reduce conj! (transient ((:export exportable) data)) (random/rand-next length-random) )))
+          (fn [data] (persistent! (reduce conj! (transient ((:export serializable) data)) (random/rand-next length-random) )))
           ; import
-          (fn [^bytes xs]
+          (fn [^bytes xs args]
             (if (not= (count xs) length-aligned)
               (throw (new IllegalArgumentException))
-              ((:import exportable) (subvec xs 0 (:length exportable)))))
+              ((:import serializable) (subvec xs 0 (:length serializable)) args)))
           ; length
           length-aligned ))))
   (let [ item (uint/uint64 :id)
@@ -30,6 +30,6 @@
     (is (thrown? IllegalArgumentException (align 7 item)))
     (is (= (count ((:export (align 128 item)) data)) 128))
     (is (= (subvec ((:export (align 128 item)) data) 0 8 ) result))
-    (is (= ((:import (align 16 item)) result-aligned) data))
+    (is (= ((:import (align 16 item)) result-aligned {}) data))
     (is (= (:length (align 128 item)) 128)) ))
 
