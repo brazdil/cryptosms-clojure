@@ -1,7 +1,8 @@
 (ns uk.ac.cam.db538.cryptosms.zlib
   (:use [clojure.test :only (with-test, is) ]
         [uk.ac.cam.db538.cryptosms.utils :only (HEX ASCII) ])
-  (:require [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays] )
+  (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
+            [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays] )
   (:import (java.util.zip Inflater Deflater)
            (java.io ByteArrayOutputStream) )) 
 
@@ -16,7 +17,7 @@
     (. deflater finish)
     (loop [ ]
       (if (. deflater finished)
-        (byte-arrays/input (. bos toByteArray))
+        (subvec (byte-arrays/input (. bos toByteArray)) 2) ; get rid of ZLIB header - wastes 2 bytes
         (let [ compressed (. deflater deflate buffer) ]
           (. bos write buffer 0 compressed)
           (recur))))))
@@ -27,7 +28,7 @@
   (let [ buffer      (byte-arrays/create 1024)
          inflater    (new Inflater)
          bos         (new ByteArrayOutputStream (count data))
-         data-bytes  (byte-arrays/output data) ]
+         data-bytes  (byte-arrays/output (persistent! (reduce conj! (transient [ 120 156 ]) data)) ) ] ; prepends ZLIB header
     (. inflater setInput data-bytes)
     (loop [ ]
       (if (. inflater finished)
