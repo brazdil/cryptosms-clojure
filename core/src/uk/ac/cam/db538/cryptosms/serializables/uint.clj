@@ -94,18 +94,18 @@
         (fn [data] (get-integer-bytes (name data) len))
         ; import 
         (fn [^bytes xs args]
-          (if (not= (count xs) len)
+          (if (< (count xs) len)
             (throw (new IllegalArgumentException))
-            {name (parse-integer-bytes xs)}))
+            {name (parse-integer-bytes (subvec xs 0 len))}))
         ; length
-        len )))
+        (fn [data] len) )))
   (is (thrown? IllegalArgumentException (uint-type-factory :test -1)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 0)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 9)))
   (is (thrown? IllegalArgumentException (uint-type-factory :test 10)))
   (is (= ((:export (uint-type-factory :test 3)) {:test 0x123456}) [ 0x12 0x34 0x56 ]))
   (is (= ((:import (uint-type-factory :test 3)) [ 0xAB 0xCD 0xEF ] {}) {:test 0xABCDEF}))
-  (is (= (:length (uint-type-factory :test 3)) 3)))
+  (is (= ((:length (uint-type-factory :test 3)) {} ) 3)))
 
 (defn uint8 
   "Returns a serializable type for 8-bit unsigned integer"
