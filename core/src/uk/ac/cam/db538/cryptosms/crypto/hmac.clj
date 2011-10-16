@@ -1,8 +1,9 @@
 (ns uk.ac.cam.db538.cryptosms.crypto.hmac
   (:use [clojure.test :only (with-test, is) ]
-        [uk.ac.cam.db538.cryptosms.utils :only (HEX ASCII) ])
+        [uk.ac.cam.db538.cryptosms.utils :only (HEX) ]
+        [uk.ac.cam.db538.cryptosms.charset :only (ASCII8) ])
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
-            [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays]
+            [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays]
             [uk.ac.cam.db538.cryptosms.crypto.hash :as hash] )
   (:import (org.spongycastle.crypto.macs HMac)
            (org.spongycastle.crypto.digests SHA1Digest SHA256Digest)
@@ -28,12 +29,12 @@
         (byte-arrays/input result-bytes))))
   ; tests from http://tools.ietf.org/html/rfc2202
   (is (= (hmac-sha1
-           (ASCII "Hi There")
+           (ASCII8 "Hi There")
            (byte-arrays/output (HEX "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")))
          (HEX "b617318655057264e28bc0b6fb378c8ef146be00")))
   (is (= (hmac-sha1
-           (ASCII "what do ya want for nothing?")
-           (byte-arrays/output (ASCII "Jefe")))
+           (ASCII8 "what do ya want for nothing?")
+           (byte-arrays/output (ASCII8 "Jefe")))
          (HEX "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79")))
   (is (= (hmac-sha1
            (vec (repeat 50 0xdd))
@@ -44,15 +45,15 @@
            (byte-arrays/output (HEX "0102030405060708090a0b0c0d0e0f10111213141516171819")))
          (HEX "4c9007f4026250c6bc8414f9bf50c86c2d7235da")))
   (is (= (hmac-sha1
-           (ASCII "Test With Truncation")
+           (ASCII8 "Test With Truncation")
            (byte-arrays/output (HEX "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c")))
          (HEX "4c1a03424b55e07fe7f27be1d58bb9324a9a5a04")))
   (is (= (hmac-sha1
-           (ASCII "Test Using Larger Than Block-Size Key - Hash Key First")
+           (ASCII8 "Test Using Larger Than Block-Size Key - Hash Key First")
            (byte-arrays/output (vec (repeat 80 0xaa))))
          (HEX "aa4ae5e15272d00e95705637ce8a3b55ed402112")))
   (is (= (hmac-sha1
-           (ASCII "Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data")
+           (ASCII8 "Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data")
            (byte-arrays/output (vec (repeat 80 0xaa))))
          (HEX "e8e99d0f45237d786d6bbaa7965c7808bbff1a91"))) )
 

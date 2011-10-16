@@ -2,7 +2,7 @@
   (:use [clojure.test :only (with-test, is) ]
         [uk.ac.cam.db538.cryptosms.utils :only (HEX) ])
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
-            [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays]
+            [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays]
             [uk.ac.cam.db538.cryptosms.crypto.random :as random]
             [uk.ac.cam.db538.cryptosms.crypto.block-cipher :as block-cipher]
             [uk.ac.cam.db538.cryptosms.crypto.hmac :as hmac])

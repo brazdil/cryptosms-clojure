@@ -1,4 +1,4 @@
-(ns uk.ac.cam.db538.cryptosms.low-level.byte-arrays
+(ns uk.ac.cam.db538.cryptosms.byte-arrays
   (:use [clojure.test :only (with-test, is) ]))
 
 ; CONVERT TO BYTE ARRAY
@@ -7,7 +7,7 @@
   "Creates a Java byte array of given length."
   [^Number len]
   (byte-array (repeat len (byte 0))))
-  
+
 (with-test
   (defn output 
     "Turns a Clojure vector into Java byte array. Expects the Clojure vector to contain unsigned bytes (numbers between 0-255)."
@@ -30,3 +30,7 @@
 	  (vec (map #(if (< % 0) (+ % 256) %) (vec array))))
   (is (= (input (byte-array (map #(byte %) [ 0 1 2 3 ]))) [ 0 1 2 3 ]))
   (is (= (input (byte-array (map #(byte %) [ -1 -2 -3 ]))) [ 255 254 253 ])) ) 
+  
+; byte-array Java type
+(defn java-type [] (java.lang.Class/forName "[B"))
+

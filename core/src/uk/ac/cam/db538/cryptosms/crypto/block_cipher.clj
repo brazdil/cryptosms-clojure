@@ -1,6 +1,6 @@
 (ns uk.ac.cam.db538.cryptosms.crypto.block-cipher
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils])
-  (:require [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays]))
+  (:require [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays]))
 
 (defn outcome 
   "Returns the outcome of given BouncyCastle BlockCipher, which was previously set up."

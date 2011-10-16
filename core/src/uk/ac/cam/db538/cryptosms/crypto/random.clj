@@ -1,6 +1,6 @@
 (ns uk.ac.cam.db538.cryptosms.crypto.random
   (:use [clojure.test :only (with-test, is) ])
-  (:require [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays])
+  (:require [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays])
   (:import (java.security SecureRandom)))
 
 (def global-secure-random (SecureRandom/getInstance "SHA1PRNG" "SUN"))
