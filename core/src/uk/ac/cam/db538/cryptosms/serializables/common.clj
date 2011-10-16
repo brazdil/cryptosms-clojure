@@ -36,9 +36,14 @@
 ;   ((:import crypto-serializable) crypto-result {:key crypto-key})
 ;   => {:id1 32}
 ;
-; Length is just a constant generated during construction of the record and 
-; can be directly queried.
-; Example:
-;   (:length (uint8 :id1))
+; Length is very similar to export - it is a function that takes a hash map with
+; values for all the serializables in the structure, and returns an integer,
+; the length of data that should be produced by export using the same data.
+; Example: 
+;   ((:length serializable) {:id1 32})
 ;   => 1
-;
+; Some of the serializables don't actually need the data (like uint8 in the
+; example), since they have a constant length, independent of the arguments.
+; However, for example serializables that use strings can return different
+; length for different inputs.
+; 
