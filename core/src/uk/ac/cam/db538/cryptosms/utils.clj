@@ -57,4 +57,11 @@
   (is (= (HEX []) ""))
   (is (= (HEX [255] ) "ff"))
   (is (= (HEX [0x12 0x34]) "1234")))
-      
+
+(defn string-vector [data]
+  (if (string? data)
+    :string
+    (if (vector? data)
+      :vector
+      (throw (new IllegalArgumentException)))))
+

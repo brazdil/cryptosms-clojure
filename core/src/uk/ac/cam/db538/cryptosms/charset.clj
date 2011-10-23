@@ -3,17 +3,10 @@
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
             [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays] ))
 
-(defn- string-vector [data]
-  (if (string? data)
-    :string
-    (if (vector? data)
-      :vector
-      (throw (new IllegalArgumentException)))))
-
 (defmulti ASCII8 
   "Given a string, returns byte-vector with 8-bit ASCII representation of that string.
    Given a vector, does the reverse."
-  string-vector)
+  utils/string-vector)
 
 (defmethod ASCII8 :string [ data ]
   (byte-arrays/input (. data getBytes "US-ASCII")))
@@ -24,7 +17,7 @@
 (defmulti UTF8 
   "Given a string, returns byte-vector with UTF-8 representation of that string.
    Given a vector, does the reverse."
-  string-vector)
+  utils/string-vector)
   
 (defmethod UTF8 :string [ data ]
   (byte-arrays/input (. data getBytes "UTF-8")))
@@ -35,7 +28,7 @@
 (defmulti UTF16 
   "Given a string, returns byte-vector with UTF-16 representation of that string.
    Given a vector, does the reverse."
-  string-vector)
+  utils/string-vector)
   
 (defmethod UTF16 :string [ data ]
   (byte-arrays/input (. data getBytes "UTF-16")))
@@ -110,7 +103,7 @@
 (defmulti ASCII7 
   "Given a string, returns byte-vector with 7-bit ASCII representation of that string.
    Given a vector, does the reverse."
-  string-vector)
+  utils/string-vector)
   
 (defmethod ASCII7 :string [ data ]
   (loop [ separated (byte-separate-in (ASCII8 data))
