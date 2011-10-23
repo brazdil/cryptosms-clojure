@@ -1,37 +1,47 @@
 (ns uk.ac.cam.db538.cryptosms.charset
-  (:use [clojure.test :only (with-test, is) ])
+  (:use [clojure.test :only (with-test, is, deftest) ])
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
             [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays] ))
 
-(defn ASCII8 
+(defn- string-vector [data]
+  (if (string? data)
+    :string
+    (if (vector? data)
+      :vector
+      (throw (new IllegalArgumentException)))))
+
+(defmulti ASCII8 
   "Given a string, returns byte-vector with 8-bit ASCII representation of that string.
    Given a vector, does the reverse."
-  [ data ]
-  (if (string? data)
-    (byte-arrays/input (. data getBytes "US-ASCII"))
-    (if (vector? data)
-      (new String (byte-arrays/output data) "US-ASCII")
-      (throw (new IllegalArgumentException)))))
+  string-vector)
 
-(defn UTF8 
+(defmethod ASCII8 :string [ data ]
+  (byte-arrays/input (. data getBytes "US-ASCII")))
+  
+(defmethod ASCII8 :vector [ data ]
+  (new String (byte-arrays/output data) "US-ASCII"))
+
+(defmulti UTF8 
   "Given a string, returns byte-vector with UTF-8 representation of that string.
    Given a vector, does the reverse."
-  [ data ]
-  (if (string? data)
-    (byte-arrays/input (. data getBytes "UTF-8"))
-    (if (vector? data)
-      (new String (byte-arrays/output data) "UTF-8")
-      (throw (new IllegalArgumentException)))))
+  string-vector)
+  
+(defmethod UTF8 :string [ data ]
+  (byte-arrays/input (. data getBytes "UTF-8")))
+  
+(defmethod UTF8 :vector [ data ]
+  (new String (byte-arrays/output data) "UTF-8"))
 
-(defn UTF16 
+(defmulti UTF16 
   "Given a string, returns byte-vector with UTF-16 representation of that string.
    Given a vector, does the reverse."
-  [ data ]
-  (if (string? data)
-    (byte-arrays/input (. data getBytes "UTF-16"))
-    (if (vector? data)
-      (new String (byte-arrays/output data) "UTF-16")
-      (throw (new IllegalArgumentException)))))
+  string-vector)
+  
+(defmethod UTF16 :string [ data ]
+  (byte-arrays/input (. data getBytes "UTF-16")))
+  
+(defmethod UTF16 :vector [ data ]
+  (new String (byte-arrays/output data) "UTF-16"))
 
 (with-test
   (defn length-in-ascii7 
@@ -49,7 +59,13 @@
   (is (= (length-in-ascii7 31) 28))
   (is (= (length-in-ascii7 32) 28)))
 
-(defn- byte-separate-in [ ^bytes xs ]
+(defn- byte-separate-in
+  "Takes a byte-vector and prepares it to be turned into 7-bit compressed format.
+   The algorithm divides each byte into two parts at different points. Result
+   is a byte-vector, where two adjacent bytes contain bits from the two adjecent 
+   bytes of original vector and these need to be or-ed together to produce a byte
+   in the resulting 7-bit representation."
+ [ ^bytes xs ]
   (loop [ xs xs
          separation-point 0
          accu (vector-of :int) ]
@@ -69,6 +85,10 @@
               (conj (conj accu byte1) byte2))))))))
 
 (defn- byte-separate-out [ ^bytes xs ]
+  "Expects a 7-bit representation of data and prepares it to be turned back into 
+  an 8-bit representation by splitting bytes after each 7 bits. Resulting byte-vector
+  is twice the size as original since two adjecent bytes have to be or-ed together
+  to form the 8-bit representation."  
   (loop [ xs xs
          separation-point 6
          accu (vector-of :int) ]
@@ -87,29 +107,32 @@
               (conj (conj (conj accu byte1) byte2) 0x00)
               (conj (conj accu byte1) byte2))))))))
 
-(with-test
-  (defn ASCII7 
-    "Given a string, returns byte-vector with 7-bit ASCII representation of that string.
-     Given a vector, does the reverse."
-    [ data ]
-    (if (string? data)
-      (loop [ separated (byte-separate-in (ASCII8 data))
-              accu (vector-of :int) ]
-        (if (empty? separated)
-          accu
-          (recur
-            (subvec separated 2)
-            (conj accu (bit-or (separated 0) (separated 1))))))
-      (if (vector? data)
-        (loop [ separated (byte-separate-out data)
-                accu (vector-of :int) ]
-          (if (empty? separated)
-            (if (and (> (count accu) 0) (= (accu (- (count accu) 1)) 0))
-              (ASCII8 (subvec accu 0 (- (count accu) 1))) ; gets rid of redundant zero at the end
-              (ASCII8 accu))
-            (recur
-              (subvec separated 2)
-              (conj accu (bit-or (separated 0) (separated 1)))))))))
+(defmulti ASCII7 
+  "Given a string, returns byte-vector with 7-bit ASCII representation of that string.
+   Given a vector, does the reverse."
+  string-vector)
+  
+(defmethod ASCII7 :string [ data ]
+  (loop [ separated (byte-separate-in (ASCII8 data))
+          accu (vector-of :int) ]
+    (if (empty? separated)
+      accu
+      (recur
+        (subvec separated 2)
+        (conj accu (bit-or (separated 0) (separated 1)))))))
+        
+(defmethod ASCII7 :vector [ data ]
+  (loop [ separated (byte-separate-out data)
+          accu (vector-of :int) ]
+    (if (empty? separated)
+      (if (and (> (count accu) 0) (= (accu (- (count accu) 1)) 0))
+        (ASCII8 (subvec accu 0 (- (count accu) 1))) ; gets rid of redundant zero at the end
+        (ASCII8 accu))
+      (recur
+        (subvec separated 2)
+        (conj accu (bit-or (separated 0) (separated 1)))))))
+
+(deftest testASCII7
   (is (= (ASCII7 "") []))
   (is (= (ASCII7 "1") [ 0x62 ]))
   (is (= (ASCII7 "11") [ 0x62 0xC4 ]))
