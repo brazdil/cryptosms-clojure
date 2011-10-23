@@ -14,11 +14,11 @@
       (uk.ac.cam.db538.cryptosms.serializables.common.Serializable.
         ; export
         (fn [data]
-          (let [ sub-result (transient ((:export serializable) data))
+          (let [ sub-result ((:export serializable) data)
                  length-random (- length-aligned (count sub-result)) ]
             (if (< length-random 0)
               (throw (new IllegalArgumentException))
-              (persistent! (reduce conj! sub-result (random/rand-next length-random) )))))
+              (reduce conj sub-result (random/rand-next length-random) ))))
         ; import
         (fn [^bytes xs args]
           (if (not= (count xs) length-aligned)

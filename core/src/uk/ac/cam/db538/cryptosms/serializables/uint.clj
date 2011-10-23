@@ -31,7 +31,7 @@
     (if (< len 0)
       (throw (new IllegalArgumentException))
       (loop [rem len
-             accu []]
+             accu (vector-of :int)]
         (if (<= rem 0)
           accu
           (recur (dec rem) 

@@ -49,39 +49,67 @@
   (is (= (length-in-ascii7 31) 28))
   (is (= (length-in-ascii7 32) 28)))
 
+(defn- byte-separate-in [ ^bytes xs ]
+  (loop [ xs xs
+         separation-point 0
+         accu (vector-of :int) ]
+    (if (empty? xs)
+      (if (= separation-point 0)
+        accu
+        (conj accu 0))
+      (recur 
+        (subvec xs 1) 
+        (mod (+ separation-point 1) 8)
+        (let [ byte1 (bit-and (bit-shift-right (xs 0) (- 7 separation-point)) 0xFF)
+               byte2 (bit-and (bit-shift-left (xs 0) (+ 1 separation-point)) 0xFF) ]
+          (if (= separation-point 0)
+            (conj accu byte2)
+            (if (= separation-point 7)
+              (conj accu byte1)
+              (conj (conj accu byte1) byte2))))))))
+
+(defn- byte-separate-out [ ^bytes xs ]
+  (loop [ xs xs
+         separation-point 6
+         accu (vector-of :int) ]
+    (if (empty? xs)
+      (if (= separation-point 6)
+        accu
+        (conj accu 0))
+      (recur
+        (subvec xs 1)
+        (mod (- separation-point 1) 7)
+        (let [ byte1 (bit-and (bit-shift-right (xs 0) (- 7 separation-point)) 0xFF)
+               byte2 (bit-and (bit-shift-left (xs 0) separation-point) 0x7F) ]
+          (if (= separation-point 6)
+            (conj (conj (conj accu 0x00) byte1) byte2)
+            (if (= separation-point 0)
+              (conj (conj (conj accu byte1) byte2) 0x00)
+              (conj (conj accu byte1) byte2))))))))
+
 (with-test
   (defn ASCII7 
     "Given a string, returns byte-vector with 7-bit ASCII representation of that string.
      Given a vector, does the reverse."
     [ data ]
     (if (string? data)
-      (letfn [ (separate [ ^bytes xs ]
-                 (loop [ xs xs
-                         separation-point 0
-                         accu (transient []) ]
-                   (if (empty? xs)
-                     (if (= separation-point 0)
-                       (persistent! accu)
-                       (persistent! (conj! accu 0)))
-                     (recur 
-                       (subvec xs 1) 
-                       (mod (+ separation-point 1) 8)
-                       (let [ byte1 (bit-and (bit-shift-right (xs 0) (- 7 separation-point)) 0xFF)
-                              byte2 (bit-and (bit-shift-left (xs 0) (+ 1 separation-point)) 0xFF) ]
-                         (if (= separation-point 0)
-                           (conj! accu byte2)
-                           (if (= separation-point 7)
-                           (conj! accu byte1)
-                           (conj! (conj! accu byte1) byte2)))))))) ]
-        (loop [ separated (separate (ASCII8 data))
-                accu (transient []) ]
+      (loop [ separated (byte-separate-in (ASCII8 data))
+              accu (vector-of :int) ]
+        (if (empty? separated)
+          accu
+          (recur
+            (subvec separated 2)
+            (conj accu (bit-or (separated 0) (separated 1))))))
+      (if (vector? data)
+        (loop [ separated (byte-separate-out data)
+                accu (vector-of :int) ]
           (if (empty? separated)
-            (persistent! accu)
+            (if (and (> (count accu) 0) (= (accu (- (count accu) 1)) 0))
+              (ASCII8 (subvec accu 0 (- (count accu) 1))) ; gets rid of redundant zero at the end
+              (ASCII8 accu))
             (recur
               (subvec separated 2)
-              (conj! accu (bit-or (separated 0) (separated 1)))))))
-      (if (vector? data)
-        (ASCII8 data))))
+              (conj accu (bit-or (separated 0) (separated 1)))))))))
   (is (= (ASCII7 "") []))
   (is (= (ASCII7 "1") [ 0x62 ]))
   (is (= (ASCII7 "11") [ 0x62 0xC4 ]))
@@ -92,4 +120,15 @@
   (is (= (ASCII7 "1111111") [ 0x62 0xC5 0x8b 0x16 0x2c 0x58 0x80 ] ))
   (is (= (ASCII7 "11111111") [ 0x62 0xC5 0x8b 0x16 0x2c 0x58 0xb1 ] ))
   (is (= (ASCII7 "111111111") [ 0x62 0xC5 0x8b 0x16 0x2c 0x58 0xb1 0x62 ] ))
-  (is (= (ASCII7 "Hello, world!!!") (utils/HEX "919766cdeb1077dfcb6644285080"))) )
+  (is (= (ASCII7 "Hello, world!!!") (utils/HEX "919766cdeb1077dfcb6644285080")))
+  (is (= "" (ASCII7 [])))
+  (is (= "1" (ASCII7 [ 0x62 ])))
+  (is (= "11" (ASCII7 [ 0x62 0xC4 ])))
+  (is (= "111" (ASCII7 [ 0x62 0xC5 0x88 ])))
+  (is (= "1111" (ASCII7 [ 0x62 0xC5 0x8b 0x10 ])))
+  (is (= "11111" (ASCII7 [ 0x62 0xC5 0x8b 0x16 0x20 ])))
+  (is (= "111111" (ASCII7 [ 0x62 0xC5 0x8b 0x16 0x2c 0x40 ])))
+  (is (= "1111111" (ASCII7 [ 0x62 0xC5 0x8b 0x16 0x2c 0x58 0x80 ] )))
+  (is (= "11111111" (ASCII7 [ 0x62 0xC5 0x8b 0x16 0x2c 0x58 0xb1 ] )))
+  (is (= "111111111" (ASCII7 [ 0x62 0xC5 0x8b 0x16 0x2c 0x58 0xb1 0x62 ] )))
+  (is (= "Hello, world!!!" (ASCII7 (utils/HEX "919766cdeb1077dfcb6644285080")))) )

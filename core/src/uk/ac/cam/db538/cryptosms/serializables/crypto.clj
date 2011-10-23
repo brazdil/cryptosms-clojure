@@ -28,13 +28,11 @@
                serialized-data        ((:export serializable-aligned) data)
                crypto-key             (key-name data)
                crypto-iv              (random/rand-next aes/block-size-aes-cbc) ]
-          (persistent!
-            (reduce conj! 
-              (transient (hmac/hmac-sha1 serialized-data crypto-key))
-              (persistent!
-                (reduce conj!
-                  (transient crypto-iv)
-                  (aes/encrypt-aes-cbc serialized-data crypto-key crypto-iv)))))))
+          (reduce conj
+            (hmac/hmac-sha1 serialized-data crypto-key)
+              (reduce conj
+                crypto-iv
+                (aes/encrypt-aes-cbc serialized-data crypto-key crypto-iv)))))
       ; import
       (fn [^bytes xs args] 
         (if (< (count xs) overhead-aes-cbc-sha1)

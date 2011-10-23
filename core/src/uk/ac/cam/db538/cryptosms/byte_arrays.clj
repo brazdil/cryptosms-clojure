@@ -27,7 +27,16 @@
   (defn input 
     "Turns a Java byte array into a Clojure vector. Produces vector with unsigned integers (numbers between 0-255)."
     [^bytes array]
-	  (vec (map #(if (< % 0) (+ % 256) %) (vec array))))
+    (loop [ pos 0
+            accu (into (vector-of :int) array) ]
+      (if (>= pos (count accu))
+        accu
+        (let [ head (accu pos) ]
+         (recur 
+           (inc pos) 
+           (if (< head 0)
+             (assoc accu pos (+ head 256))
+             accu))))))
   (is (= (input (byte-array (map #(byte %) [ 0 1 2 3 ]))) [ 0 1 2 3 ]))
   (is (= (input (byte-array (map #(byte %) [ -1 -2 -3 ]))) [ 255 254 253 ])) ) 
   

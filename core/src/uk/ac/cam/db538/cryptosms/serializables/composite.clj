@@ -10,7 +10,7 @@
     [serializables]
     (uk.ac.cam.db538.cryptosms.serializables.common.Serializable.
       ; export
-      (fn [data] (persistent! (reduce #(reduce conj! %1 %2) (transient []) (map #((:export %) data) serializables))))
+      (fn [data] (reduce #(reduce conj %1 %2) (vector-of :int) (map #((:export %) data) serializables)))
       ; import
       (fn [^bytes xs args]
         (loop [ offset 0
