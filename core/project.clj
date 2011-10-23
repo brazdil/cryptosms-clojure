@@ -4,6 +4,6 @@
   :aot [#".*"] 
   :uberjar-name "cryptosms-core-withdeps.jar"
   :javac-options {:destdir "bin/classes/"}
-  :java-source-path "3rd-party/src/"
+  :java-source-path "java/src/"
   :repl-init uk.ac.cam.db538.cryptosms.compressed-string
   :test-path "src")
