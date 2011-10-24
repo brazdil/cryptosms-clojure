@@ -4,6 +4,8 @@
   (:import (java.security SecureRandom)))
 
 (def global-secure-random (SecureRandom/getInstance "SHA1PRNG" "SUN"))
+; WARNING: used not only in this file!!!
+; used in: crypto/ecdh
 
 (defn rand-next-bytes 
   "Generates a Java byte array of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."
