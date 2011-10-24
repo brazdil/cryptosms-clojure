@@ -1,15 +1,14 @@
 (ns uk.ac.cam.db538.cryptosms.serializables.crypto
   (:use [clojure.test :only (with-test, is) ]
         [uk.ac.cam.db538.cryptosms.utils :only (HEX) ])
-  (:require [uk.ac.cam.db538.cryptosms.WrongKeyException]
-            [uk.ac.cam.db538.cryptosms.utils :as utils]
+  (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
             [uk.ac.cam.db538.cryptosms.serializables.common :as common]
             [uk.ac.cam.db538.cryptosms.serializables.align :as align]
             [uk.ac.cam.db538.cryptosms.serializables.uint :as uint]
             [uk.ac.cam.db538.cryptosms.crypto.aes :as aes]
             [uk.ac.cam.db538.cryptosms.crypto.hmac :as hmac]
             [uk.ac.cam.db538.cryptosms.crypto.random :as random]
-            [uk.ac.cam.db538.cryptosms.low-level.byte-arrays :as byte-arrays] ) )
+            [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays] ) )
 
 (def overhead-aes-cbc-sha1 (+ hmac/length-hmac-sha1 aes/block-size-aes-cbc))
 
