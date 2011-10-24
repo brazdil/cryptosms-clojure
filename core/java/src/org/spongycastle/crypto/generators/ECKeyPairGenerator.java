@@ -44,6 +44,14 @@ public class ECKeyPairGenerator
         }
         while (d.equals(ZERO)  || (d.compareTo(n) >= 0));
 
+        return createKeyPair(d);
+    }
+    
+    /**
+     * Creates a key pair from previously generated private key
+     * Added by David Brazdil for CryptoSMS
+     */
+    public AsymmetricCipherKeyPair createKeyPair(BigInteger d) {
         ECPoint Q = params.getG().multiply(d);
 
         return new AsymmetricCipherKeyPair(

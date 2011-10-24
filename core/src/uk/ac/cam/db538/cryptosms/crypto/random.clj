@@ -3,9 +3,12 @@
   (:require [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays])
   (:import (java.security SecureRandom)))
 
-(def global-secure-random (SecureRandom/getInstance "SHA1PRNG" "SUN"))
-; WARNING: used not only in this file!!!
-; used in: crypto/ecdh
+(defn create-random
+  "Returns an instance of SecureRandom"
+  []
+  (SecureRandom/getInstance "SHA1PRNG" "SUN"))
+
+(def global-secure-random (create-random))
 
 (defn rand-next-bytes 
   "Generates a Java byte array of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."

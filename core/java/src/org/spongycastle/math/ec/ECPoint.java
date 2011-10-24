@@ -109,6 +109,7 @@ public abstract class ECPoint
     }
 
     public abstract byte[] getEncoded();
+    public abstract ECPoint getCompressed(); // added by David Brazdil for CryptoSMS
 
     public abstract ECPoint add(ECPoint b);
     public abstract ECPoint subtract(ECPoint b);
@@ -324,6 +325,12 @@ public abstract class ECPoint
                 this.multiplier = new WNafMultiplier();
             }
         }
+
+        // Added by David Brazdil for CryptoSMS
+        @Override
+		    public ECPoint getCompressed() {
+			      return new ECPoint.Fp(this.curve, this.x, this.y, true);
+		    }
     }
 
     /**
@@ -583,6 +590,12 @@ public abstract class ECPoint
                     this.multiplier = new WNafMultiplier();
                 }
             }
+        }
+
+        // Added by David Brazdil for CryptoSMS
+        @Override
+        public ECPoint getCompressed() {
+            return new ECPoint.F2m(this.curve, this.x, this.y, true);
         }
     }
 }
