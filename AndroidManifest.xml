@@ -7,7 +7,9 @@
 
     <application android:icon="@drawable/icon" 
                  android:label="@string/app_name" 
-                 android:name="greendroid.app.GDApplication">
+	             android:theme="@style/Theme.GreenDroid.NoTitleBar"
+                 android:name=".CryptoSMSApplication">
+                 
 	    <activity android:name=".activities.ListsActivity" 
 		          android:configChanges="orientation|keyboardHidden">
 			<intent-filter>
@@ -15,5 +17,6 @@
 				<category android:name="android.intent.category.LAUNCHER"></category>
 			</intent-filter>
 		</activity>
+		
     </application>
 </manifest>
