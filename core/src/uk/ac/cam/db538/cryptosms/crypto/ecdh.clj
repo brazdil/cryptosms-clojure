@@ -26,7 +26,7 @@
 
 (def ECDH_CURVE (new ECCurve$Fp ECDH_P ECDH_A ECDH_B))
 (def ECDH_PARAMS (new ECDomainParameters ECDH_CURVE (. ECDH_CURVE decodePoint ECDH_G) ECDH_N ECDH_H))
-(def ECDH_RANDOM (random/create-random))
+(def ECDH_RANDOM (random/create))
 (def ECDH_KEYGEN_PARAMS (new ECKeyGenerationParameters ECDH_PARAMS ECDH_RANDOM))
 
 ; global objects
@@ -36,7 +36,7 @@
 
 (def length-ecdh-key 33)
 
-(defn ecdh-generate-private-key 
+(defn generate-private-key 
   "Generates a new random private key for ECDH."
   []
   (locking global-ecdh-keygen
@@ -46,7 +46,7 @@
       ; align key vector to length-ecdh-key with leading zeros
       (reduce conj (reduce conj (vector-of :int) (repeat (- length-ecdh-key (count private-key-vector)) 0)) private-key-vector) )))
           
-(defn ecdh-get-public-key 
+(defn get-public-key 
   "Takes an ECDH private key and returns the associated public key to be sent
    to the other party."
   [ private-key ]
@@ -55,7 +55,7 @@
            public-key (cast ECPublicKeyParameters (. key-pair getPublic)) ]
       (byte-arrays/input (. (. (. public-key getQ) getCompressed) getEncoded)))))
 
-(defn ecdh-get-shared-key
+(defn get-shared-key
   "Takes an ECDH private key and a public key of the other party and returns
    the shared key they both should compute."
   [ private-key other-public-key ]
@@ -74,14 +74,14 @@
          pub-key1 (new BigInteger pub-key1)
          pub-key2 (new BigInteger pub-key2)
          shared (new BigInteger shared)
-         pub-key-cmp1 (ecdh-get-public-key prv-key1) 
-         pub-key-cmp2 (ecdh-get-public-key prv-key2)
+         pub-key-cmp1 (get-public-key prv-key1) 
+         pub-key-cmp2 (get-public-key prv-key2)
          pub-key-int1 (new BigInteger (byte-arrays/output (reduce conj [0] (subvec pub-key-cmp1 1))))
          pub-key-int2 (new BigInteger (byte-arrays/output (reduce conj [0] (subvec pub-key-cmp2 1)))) ]
     (is (= pub-key-int1 pub-key1))
     (is (= pub-key-int2 pub-key2))
-    (is (= (ecdh-get-shared-key prv-key1 pub-key-cmp2) shared))
-    (is (= (ecdh-get-shared-key prv-key2 pub-key-cmp1) shared)) ))
+    (is (= (get-shared-key prv-key1 pub-key-cmp2) shared))
+    (is (= (get-shared-key prv-key2 pub-key-cmp1) shared)) ))
 
 (deftest ecdh-tests
   (ecdh-test 
@@ -103,7 +103,7 @@
     "66990695845067559695126086216658800365697003534398164091046680021441221078972"  ; Bob public
     "41025872958014154736786020212226025631628785600823319662937419944313606428924") ; Shared secret 
   (dotimes [n 1000] 
-    (let [ prv-key (ecdh-generate-private-key) ]
+    (let [ prv-key (generate-private-key) ]
       (is (= (count prv-key) length-ecdh-key))
-      (is (= (count (ecdh-get-public-key prv-key)) length-ecdh-key)))))
+      (is (= (count (get-public-key prv-key)) length-ecdh-key)))))
     

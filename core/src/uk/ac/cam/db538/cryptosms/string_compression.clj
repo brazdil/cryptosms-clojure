@@ -1,4 +1,4 @@
-(ns uk.ac.cam.db538.cryptosms.compressed-string
+(ns uk.ac.cam.db538.cryptosms.string-compression
   (:use [clojure.test :only (with-test, is, deftest) ])
   (:require [uk.ac.cam.db538.cryptosms.utils :as utils]
             [uk.ac.cam.db538.cryptosms.charset :as charset]
@@ -29,15 +29,12 @@
   [^bytes data]
   (bit-and 2r00001111 (data 0)))
 
-(defmulti compressed-string
-  "Given a string, returns byte-vector with a compressed representation of that string.
-   Given a vector, does the reverse.
-   Algorithm automatically tries representing the text as ASCII7, ASCII8, UTF-8 and UTF-16
+(defn compress 
+  "Algorithm automatically tries representing the text as ASCII7, ASCII8, UTF-8 and UTF-16
    and compressing each with DEFLATE algorithm. Then chooses the shortest representation.
-   ASCII encodings are tried only if the string doesn't contain any non-ASCII characters."
-  utils/string-vector)
-
-(defmethod compressed-string :string [data]
+   ASCII encodings are tried only if the string doesn't contain any non-ASCII characters.
+   Returns a byte-vector."
+  [^String data]
   (letfn [ (contains-only-ascii [data]
              (loop [ pos 0 ]
                (if (>= pos (count data))
@@ -82,7 +79,9 @@
               ; best is UTF16
               (reduce conj (conj (vector-of :int) 2r11000000) data-utf16)))))))) ; UTF16 = 11, no compression = 0
 
-(defmethod compressed-string :vector [data]
+(defn decompress
+  "Decompresses a previously compressed string. Expects a byte-vector and returns a string."
+  [^bytes data]
   (let [ data-headerless   (subvec data 1) ]
     (case (compressed-string-type data)
       :ascii7        (charset/ASCII7 data-headerless)
@@ -93,34 +92,32 @@
       :utf16         (charset/UTF16 data-headerless)
       :utf16-zlib    (charset/UTF16 (zlib/inflate data-headerless)))))
 
-(defmulti compressed-string-aligned
-  "Given a string, returns byte-vector with a compressed representation of that string.
-   Given a vector, does the reverse.
-   Algorithm automatically tries representing the text as ASCII7, ASCII8, UTF-8 and UTF-16
+(defn compress-align
+  "Algorithm automatically tries representing the text as ASCII7, ASCII8, UTF-8 and UTF-16
    and compressing each with DEFLATE algorithm. Then chooses the shortest representation.
    ASCII encodings are tried only if the string doesn't contain any non-ASCII characters.
-   Resulting vector is aligned to 16 bytes."
-  utils/string-vector)
-
-(defmethod compressed-string-aligned :string [data]
-  (let [ compressed        (compressed-string data)
+   Returns a byte-vector aligned to 16 bytes (AES block size)."
+  [^String data]
+  (let [ compressed        (compress data)
          length-garbage    (mod (- 16 (count compressed)) 16)
          new-header        (bit-or (compressed 0) (bit-or 2r00010000 length-garbage)) ]
-    (reduce conj (assoc compressed 0 new-header) (random/rand-next length-garbage))))
+    (reduce conj (assoc compressed 0 new-header) (random/next-vector length-garbage))))
 
-(defmethod compressed-string-aligned :vector [data]
+(defn decompress-aligned
+  "Decompresses a previously compressed string. Expects a byte-vector and returns a string."
+  [^bytes data]
   (if (compressed-string-alignment data)
     (let [ no-garbage      (subvec data 0 (- (count data) (compressed-string-garbage data)))
            old-header      (bit-and (data 0) 2r11100000) ]
-      (compressed-string (assoc no-garbage 0 old-header)))
-    (compressed-string data)))
+      (decompress (assoc no-garbage 0 old-header)))
+    (decompress data)))
 
 (with-test
   (defn- compressed-string-test [data charset]
-    (let [ compressed (compressed-string data)
-           decompressed (compressed-string compressed)
-           compressed-aligned (compressed-string-aligned data)
-           decompressed-aligned (compressed-string-aligned compressed-aligned) ]
+    (let [ compressed (compress data)
+           decompressed (decompress compressed)
+           compressed-aligned (compress-align data)
+           decompressed-aligned (decompress-aligned compressed-aligned) ]
       (is (= data decompressed))
       (is (= data decompressed-aligned))
       (is (= (subvec compressed-aligned 1 (count compressed)) (subvec compressed 1)))

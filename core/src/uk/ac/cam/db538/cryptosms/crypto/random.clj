@@ -3,14 +3,14 @@
   (:require [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays])
   (:import (java.security SecureRandom)))
 
-(defn create-random
+(defn create
   "Returns an instance of SecureRandom"
   []
   (SecureRandom/getInstance "SHA1PRNG" "SUN"))
 
-(def global-secure-random (create-random))
+(def global-secure-random (create))
 
-(defn rand-next-bytes 
+(defn next-bytes 
   "Generates a Java byte array of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."
   [ ^Number len ]
   (locking global-secure-random
@@ -19,9 +19,9 @@
       array)))
   
 (with-test
-  (defn rand-next 
+  (defn next-vector
     "Generates a vector of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."
     [ ^Number len ]
-    (byte-arrays/input (rand-next-bytes len)))
-  (is (= (count (rand-next 10)) 10))
-  (is (= (rand-next 0) [])))
+    (byte-arrays/input (next-bytes len)))
+  (is (= (count (next-vector 10)) 10))
+  (is (= (next-vector 0) [])))

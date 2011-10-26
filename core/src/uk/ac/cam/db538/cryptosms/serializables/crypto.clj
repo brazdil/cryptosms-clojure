@@ -8,9 +8,10 @@
             [uk.ac.cam.db538.cryptosms.crypto.aes :as aes]
             [uk.ac.cam.db538.cryptosms.crypto.hmac :as hmac]
             [uk.ac.cam.db538.cryptosms.crypto.random :as random]
-            [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays] ) )
+            [uk.ac.cam.db538.cryptosms.byte-arrays :as byte-arrays] )
+  (:import (uk.ac.cam.db538.cryptosms WrongKeyException)) )
 
-(def overhead-aes-cbc-sha1 (+ hmac/length-hmac-sha1 aes/block-size-aes-cbc))
+(def overhead-aes-cbc-sha1 (+ hmac/length-sha1 aes/block-size-aes-cbc))
 
 (with-test
   (defn aes-cbc-sha1 
@@ -26,9 +27,9 @@
                length-data-all        (+ overhead-aes-cbc-sha1 length-data-aligned) ; HMAC + IV + data
                serialized-data        ((:export serializable-aligned) data)
                crypto-key             (key-name data)
-               crypto-iv              (random/rand-next aes/block-size-aes-cbc) ]
+               crypto-iv              (random/next-vector aes/block-size-aes-cbc) ]
           (reduce conj
-            (hmac/hmac-sha1 serialized-data crypto-key)
+            (hmac/sha1 serialized-data crypto-key)
               (reduce conj
                 crypto-iv
                 (aes/encrypt-aes-cbc serialized-data crypto-key crypto-iv)))))
@@ -37,14 +38,14 @@
         (if (< (count xs) overhead-aes-cbc-sha1)
           (throw (new IllegalArgumentException))
           (let [ crypto-key      (key-name args)
-                 data-hmac       (subvec xs 0 hmac/length-hmac-sha1)
-                 data-iv         (subvec xs hmac/length-hmac-sha1 overhead-aes-cbc-sha1)
+                 data-hmac       (subvec xs 0 hmac/length-sha1)
+                 data-iv         (subvec xs hmac/length-sha1 overhead-aes-cbc-sha1)
                  data-encrypted  (subvec xs overhead-aes-cbc-sha1)
                  data-decrypted  (aes/decrypt-aes-cbc data-encrypted crypto-key data-iv)
-                 hmac-expected   (hmac/hmac-sha1 data-decrypted crypto-key) ]
+                 hmac-expected   (hmac/sha1 data-decrypted crypto-key) ]
             (if (= data-hmac hmac-expected)
               ((:import serializable) data-decrypted args)
-              (throw (new uk.ac.cam.db538.cryptosms.WrongKeyException))))))
+              (throw (new WrongKeyException))))))
       ; length
       (fn [data] (+ overhead-aes-cbc-sha1 (utils/least-greater-multiple ((:length serializable) data) aes/block-size-aes-cbc))) ))
   ; tests just check that the functions conjugate/cut everything correctly... crypto algorithms are tested separately

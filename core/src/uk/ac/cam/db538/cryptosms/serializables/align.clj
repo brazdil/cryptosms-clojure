@@ -18,7 +18,7 @@
                  length-random (- length-aligned (count sub-result)) ]
             (if (< length-random 0)
               (throw (new IllegalArgumentException))
-              (reduce conj sub-result (random/rand-next length-random) ))))
+              (reduce conj sub-result (random/next-vector length-random) ))))
         ; import
         (fn [^bytes xs args]
           (if (not= (count xs) length-aligned)
