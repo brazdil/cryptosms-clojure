@@ -10,7 +10,7 @@
 	             android:theme="@style/Theme.CryptoSMS"
                  android:name=".CryptoSMSApplication">
                  
-	    <activity android:name=".activities.ListsActivity"
+	    <activity android:name=".activities.MainActivity"
 	              android:label="@string/app_name"
 		          android:configChanges="orientation|keyboardHidden">
 			<intent-filter>

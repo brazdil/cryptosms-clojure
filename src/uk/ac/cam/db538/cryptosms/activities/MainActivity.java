@@ -7,7 +7,7 @@ import greendroid.widget.ActionBarItem.Type;
 import android.os.Bundle;
 import android.widget.Toast;
 
-public class ListsActivity extends GDActivity {
+public class MainActivity extends GDActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

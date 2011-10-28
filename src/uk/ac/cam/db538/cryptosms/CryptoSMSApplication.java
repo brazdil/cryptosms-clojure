@@ -1,12 +1,12 @@
 package uk.ac.cam.db538.cryptosms;
 
-import uk.ac.cam.db538.cryptosms.activities.ListsActivity;
+import uk.ac.cam.db538.cryptosms.activities.MainActivity;
 import greendroid.app.GDApplication;
 
 public class CryptoSMSApplication extends GDApplication {
 
     @Override
     public Class<?> getHomeActivityClass() {
-        return ListsActivity.class;
+        return MainActivity.class;
     }
 }
