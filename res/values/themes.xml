@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<style name="Theme.CryptoSMS" parent="@style/Theme.GreenDroid.Light.NoTitleBar">
+		<item name="gdActionBarApplicationDrawable">@drawable/app_logo</item>
 	</style>
 </resources>
