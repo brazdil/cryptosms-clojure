@@ -4,6 +4,7 @@ import uk.ac.cam.db538.cryptosms.R;
 import greendroid.app.GDActivity;
 import greendroid.widget.ActionBarItem;
 import greendroid.widget.ActionBarItem.Type;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -24,7 +25,9 @@ public class MainActivity extends GDActivity {
     public boolean onHandleActionBarItemClick(ActionBarItem item, int position) {
         switch (item.getItemId()) {
             case R.id.action_bar_threads:
-                Toast.makeText(this, "Threads", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, ThreadActivity.class);
+                startActivity(intent);
+
                 break;
             case R.id.action_bar_contacts:
                 Toast.makeText(this, "Contacts", Toast.LENGTH_SHORT).show();

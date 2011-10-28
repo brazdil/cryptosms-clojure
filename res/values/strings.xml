@@ -2,4 +2,6 @@
 <resources>
     <string name="hello">Hello World!</string>
     <string name="app_name">CryptoSMS</string>
+    <string name="type_to_compose">Type to compose</string>
+    <string name="send">Send</string>
 </resources>
