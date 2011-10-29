@@ -1,7 +1,6 @@
 package uk.ac.cam.db538.cryptosms.activities;
 
 import uk.ac.cam.db538.cryptosms.R;
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import greendroid.app.GDActivity;
