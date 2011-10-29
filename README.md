@@ -59,5 +59,5 @@ same time by running:
 
 Credits
 -------
- - [GreenDroid](https://github.com/cyrilmottier/GreenDroid)
+ - [GreenDroid](https://github.com/cyrilmottier/GreenDroid) (ActionBar)
  - [Double-J Design](http://www.doublejdesign.co.uk/) (icons of lock)
