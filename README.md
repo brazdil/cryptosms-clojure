@@ -15,6 +15,9 @@ platform.
 Dependencies
 ------------
 
+You need the following to compile CryptoSMS yourself. Please follow
+installation instructions on the projects' websites. 
+
  - [Android SDK](http://developer.android.com)
  - [Ant](http://ant.apache.org/)
  - [Leiningen](https://github.com/technomancy/leiningen)
@@ -22,20 +25,24 @@ Dependencies
 Compilation
 -----------
 
+Please note that these instructions assume that you have the Android 
+tools and `lein` in your $PATH. If not, you will have to change the 
+commands accordingly.
+
 Start by downloading the source code from GitHub:
 
     $ git clone git@github.com:davidbrazdil/cryptosms.git
     $ cd cryptosms
 
 Create a configuration file with information about the location of
-your Android SDK (you need to have your Android tools in $PATH). If the
-command below doesn't work for you, try updating your Android SDK
-to the latest version.
+your Android SDK. If the commands below don't work for you, try 
+updating your Android SDK to the latest version.
 
     $ android update project -p "."
     $ android update project -p "greendroid"
 
-Now simply let Ant do its job.
+Now simply let Ant do its job and compile the whole project (will
+recursively compile the Clojure files using `lein`).
 
     $ ant debug
 
@@ -52,4 +59,5 @@ same time by running:
 
 Credits
 -------
+ - [GreenDroid](https://github.com/cyrilmottier/GreenDroid)
  - [Double-J Design](http://www.doublejdesign.co.uk/) (icons of lock)
