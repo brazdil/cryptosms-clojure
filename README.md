@@ -20,7 +20,7 @@ installation instructions on the projects' websites.
 
  - [Android SDK](http://developer.android.com)
    - Android 2.1 (API 7) SDK Platform
- - [Ant](http://ant.apache.org/)
+ - [Apache Ant](http://ant.apache.org/)
  - [Leiningen](https://github.com/technomancy/leiningen)
 
 Compilation
