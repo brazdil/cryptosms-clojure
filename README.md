@@ -31,7 +31,7 @@ commands accordingly.
 
 Start by downloading the source code from GitHub:
 
-    $ git clone git@github.com:davidbrazdil/cryptosms.git
+    $ git clone git://github.com/davidbrazdil/cryptosms.git
     $ cd cryptosms
 
 Create a configuration file with information about the location of
