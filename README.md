@@ -18,8 +18,8 @@ Dependencies
 You need the following to compile CryptoSMS yourself. Please follow
 installation instructions on the projects' websites. 
 
- - [Android SDK](http://developer.android.com)
-   - Android 2.1 (API 7) SDK Platform
+ - [Android SDK](http://developer.android.com) 
+   with Android 2.1 (API 7) SDK Platform
  - [Apache Ant](http://ant.apache.org/)
  - [Leiningen](https://github.com/technomancy/leiningen)
 
