@@ -25,9 +25,10 @@ installation instructions on the projects' websites.
 Compilation
 -----------
 
-Please note that these instructions assume that you have the Android 
-tools and `lein` in your $PATH. If not, you will have to change the 
-commands accordingly.
+Please note that these instructions assume that you have folders
+containing the Android tools and `lein` in your $PATH. If not, you
+will have to change the commands accordingly, or change your $PATH
+environment variable.
 
 Start by downloading the source code from GitHub:
 
