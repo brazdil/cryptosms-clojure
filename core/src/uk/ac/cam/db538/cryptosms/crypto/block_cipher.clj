@@ -8,10 +8,10 @@
   (let [ block-size        (. cipher getBlockSize)
          length-expected   (utils/least-greater-multiple (count data) block-size)
          data-result       (byte-arrays/create length-expected)
-         data-bytes        (byte-arrays/output data) ]
+         data-bytes        (byte-arrays/from-vector data) ]
     (loop [ off 0 ]
       (if (>= off length-expected)
-        (byte-arrays/input data-result)
+        (byte-arrays/into-vector data-result)
         (if (not= (. cipher processBlock data-bytes off data-result off) block-size)
           nil ; error
           (recur (+ off block-size)))))));

@@ -14,13 +14,13 @@
     "Returns SHA-256 hash of given data. Data is a vector with uint8 elements."
     [ data ]
     (locking global-hash-sha256
-      (let [ data-bytes    (byte-arrays/output data)
+      (let [ data-bytes    (byte-arrays/from-vector data)
              data-length   (count data) 
              result-bytes  (byte-arrays/create length-hash-sha256) ]
         (. global-hash-sha256 reset)
         (. global-hash-sha256 update data-bytes 0 data-length)
         (. global-hash-sha256 doFinal result-bytes 0)
-        (byte-arrays/input result-bytes))))
+        (byte-arrays/into-vector result-bytes))))
   (is (= (sha256 (ASCII8 "The quick brown fox jumps over the lazy dog") ) (HEX "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592")))
   (is (= (sha256 (ASCII8 "The quick brown fox jumps over the lazy dog.") ) (HEX "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")))
   ; from NESSIE test vectors

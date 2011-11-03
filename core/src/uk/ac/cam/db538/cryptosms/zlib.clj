@@ -13,12 +13,12 @@
   (let [ buffer      (byte-arrays/create 1024)
          deflater    (new Deflater)
          bos         (new ByteArrayOutputStream (count data))
-         data-bytes  (byte-arrays/output data) ]
+         data-bytes  (byte-arrays/from-vector data) ]
     (. deflater setInput data-bytes)
     (. deflater finish)
     (loop [ ]
       (if (. deflater finished)
-        (subvec (byte-arrays/input (. bos toByteArray)) 2) ; get rid of ZLIB header - wastes 2 bytes
+        (subvec (byte-arrays/into-vector (. bos toByteArray)) 2) ; get rid of ZLIB header - wastes 2 bytes
         (let [ compressed (. deflater deflate buffer) ]
           (. bos write buffer 0 compressed)
           (recur))))))
@@ -31,11 +31,11 @@
     (let [ buffer      (byte-arrays/create 1024)
            inflater    (new Inflater)
            bos         (new ByteArrayOutputStream (count data))
-           data-bytes  (byte-arrays/output (persistent! (reduce conj! (transient [ 120 156 ]) data)) ) ] ; prepends ZLIB header
+           data-bytes  (byte-arrays/from-vector (persistent! (reduce conj! (transient [ 120 156 ]) data)) ) ] ; prepends ZLIB header
       (. inflater setInput data-bytes)
       (loop [ ]
         (if (. inflater finished)
-          (byte-arrays/input (. bos toByteArray))
+          (byte-arrays/into-vector (. bos toByteArray))
           (let [ decompressed (. inflater inflate buffer) ]
             (. bos write buffer 0 decompressed)
             (recur)))))))

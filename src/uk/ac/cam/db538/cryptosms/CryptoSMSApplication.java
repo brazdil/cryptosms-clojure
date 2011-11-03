@@ -15,8 +15,10 @@ public class CryptoSMSApplication extends GDApplication {
 	public void onCreate() {
 		super.onCreate();
 		
-		String storageFile = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + "storage.dat";
-		EncryptedStorage storageCrypto = new EncryptedStorage(storageFile, new CryptoKey(new byte[16]));
+		String storageDir = getApplicationContext().getFilesDir().getAbsolutePath() + "/";
+		String storageFile = storageDir + "storage.dat";
+		String storageJournal = storageDir + "journal.dat";
+		EncryptedStorage storageCrypto = new EncryptedStorage(storageFile, storageJournal, new CryptoKey(new byte[16]));
 		storageCrypto.close();
 	}
     

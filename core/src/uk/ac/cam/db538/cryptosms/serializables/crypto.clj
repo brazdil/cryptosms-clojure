@@ -51,8 +51,8 @@
   ; tests just check that the functions conjugate/cut everything correctly... crypto algorithms are tested separately
   (let [ data                   {:id64 0x01234567890ABCDEF}
          crypto-serializable    (aes-cbc-sha1 :crypto-key (uint/uint64 :id64))
-         crypto-args            {:crypto-key (byte-arrays/output (HEX "00112233445566778899AABBCCDDEEFF"))}
-         crypto-args-wrong      {:crypto-key (byte-arrays/output (HEX "00112233445566778899AABBCCDDEEF0"))}
+         crypto-args            {:crypto-key (byte-arrays/from-vector (HEX "00112233445566778899AABBCCDDEEFF"))}
+         crypto-args-wrong      {:crypto-key (byte-arrays/from-vector (HEX "00112233445566778899AABBCCDDEEF0"))}
          crypto-data            (conj data crypto-args)
          exported               ((:export crypto-serializable) crypto-data)
          imported               ((:import crypto-serializable) exported crypto-args) ]

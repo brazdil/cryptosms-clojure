@@ -42,7 +42,7 @@
   (locking global-ecdh-keygen
     (let [ key-pair (. global-ecdh-keygen generateKeyPair)
            private-key (cast ECPrivateKeyParameters (. key-pair getPrivate))
-           private-key-vector (byte-arrays/input (. (. private-key getD) toByteArray)) ]
+           private-key-vector (byte-arrays/into-vector (. (. private-key getD) toByteArray)) ]
       ; align key vector to length-ecdh-key with leading zeros
       (reduce conj (reduce conj (vector-of :int) (repeat (- length-ecdh-key (count private-key-vector)) 0)) private-key-vector) )))
           
@@ -51,9 +51,9 @@
    to the other party."
   [ private-key ]
   (locking global-ecdh-keygen
-    (let [ key-pair (. global-ecdh-keygen createKeyPair (new BigInteger (byte-arrays/output private-key)) )
+    (let [ key-pair (. global-ecdh-keygen createKeyPair (new BigInteger (byte-arrays/from-vector private-key)) )
            public-key (cast ECPublicKeyParameters (. key-pair getPublic)) ]
-      (byte-arrays/input (. (. (. public-key getQ) getCompressed) getEncoded)))))
+      (byte-arrays/into-vector (. (. (. public-key getQ) getCompressed) getEncoded)))))
 
 (defn get-shared-key
   "Takes an ECDH private key and a public key of the other party and returns
@@ -62,22 +62,22 @@
   (locking global-ecdh-keygen
     (locking ECDH_CURVE
       (locking ECDH_PARAMS
-        (let [ key-pair (. global-ecdh-keygen createKeyPair (new BigInteger (byte-arrays/output private-key)) )
-               point (. ECDH_CURVE decodePoint (byte-arrays/output other-public-key))
+        (let [ key-pair (. global-ecdh-keygen createKeyPair (new BigInteger (byte-arrays/from-vector private-key)) )
+               point (. ECDH_CURVE decodePoint (byte-arrays/from-vector other-public-key))
                agreement (doto (new ECDHBasicAgreement)
                            (.init (. key-pair getPrivate))) ]
           (. agreement calculateAgreement (new ECPublicKeyParameters point ECDH_PARAMS)))))))
 
 (defn- ecdh-test [ prv-key1 pub-key1 prv-key2 pub-key2 shared ]
-  (let [ prv-key1 (byte-arrays/input (. (new BigInteger prv-key1) toByteArray))
-         prv-key2 (byte-arrays/input (. (new BigInteger prv-key2) toByteArray))
+  (let [ prv-key1 (byte-arrays/into-vector (. (new BigInteger prv-key1) toByteArray))
+         prv-key2 (byte-arrays/into-vector (. (new BigInteger prv-key2) toByteArray))
          pub-key1 (new BigInteger pub-key1)
          pub-key2 (new BigInteger pub-key2)
          shared (new BigInteger shared)
          pub-key-cmp1 (get-public-key prv-key1) 
          pub-key-cmp2 (get-public-key prv-key2)
-         pub-key-int1 (new BigInteger (byte-arrays/output (reduce conj [0] (subvec pub-key-cmp1 1))))
-         pub-key-int2 (new BigInteger (byte-arrays/output (reduce conj [0] (subvec pub-key-cmp2 1)))) ]
+         pub-key-int1 (new BigInteger (byte-arrays/from-vector (reduce conj [0] (subvec pub-key-cmp1 1))))
+         pub-key-int2 (new BigInteger (byte-arrays/from-vector (reduce conj [0] (subvec pub-key-cmp2 1)))) ]
     (is (= pub-key-int1 pub-key1))
     (is (= pub-key-int2 pub-key2))
     (is (= (get-shared-key prv-key1 pub-key-cmp2) shared))

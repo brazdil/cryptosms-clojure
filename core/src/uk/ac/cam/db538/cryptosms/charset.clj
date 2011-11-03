@@ -8,33 +8,33 @@
    Given a vector, does the reverse."
   utils/string-vector)
 
-(defmethod ASCII8 :string [ data ]
-  (byte-arrays/input (. data getBytes "US-ASCII")))
+(defmethod ASCII8 :string [ #^String data ]
+  (byte-arrays/into-vector (. data getBytes "US-ASCII")))
   
-(defmethod ASCII8 :vector [ data ]
-  (new String (byte-arrays/output data) "US-ASCII"))
+(defmethod ASCII8 :vector [ #^clojure.core.Vec data ]
+  (new String (byte-arrays/from-vector data) "US-ASCII"))
 
 (defmulti UTF8 
   "Given a string, returns byte-vector with UTF-8 representation of that string.
    Given a vector, does the reverse."
   utils/string-vector)
   
-(defmethod UTF8 :string [ data ]
-  (byte-arrays/input (. data getBytes "UTF-8")))
+(defmethod UTF8 :string [ #^String data ]
+  (byte-arrays/into-vector (. data getBytes "UTF-8")))
   
-(defmethod UTF8 :vector [ data ]
-  (new String (byte-arrays/output data) "UTF-8"))
+(defmethod UTF8 :vector [ #^clojure.core.Vec data ]
+  (new String (byte-arrays/from-vector data) "UTF-8"))
 
 (defmulti UTF16 
   "Given a string, returns byte-vector with UTF-16 representation of that string.
    Given a vector, does the reverse."
   utils/string-vector)
   
-(defmethod UTF16 :string [ data ]
-  (byte-arrays/input (. data getBytes "UTF-16")))
+(defmethod UTF16 :string [ #^String data ]
+  (byte-arrays/into-vector (. data getBytes "UTF-16")))
   
-(defmethod UTF16 :vector [ data ]
-  (new String (byte-arrays/output data) "UTF-16"))
+(defmethod UTF16 :vector [ #^clojure.core.Vec data ]
+  (new String (byte-arrays/from-vector data) "UTF-16"))
 
 (with-test
   (defn length-in-ascii7 
@@ -105,7 +105,7 @@
    Given a vector, does the reverse."
   utils/string-vector)
   
-(defmethod ASCII7 :string [ data ]
+(defmethod ASCII7 :string [ #^String data ]
   (loop [ separated (byte-separate-in (ASCII8 data))
           accu (vector-of :int) ]
     (if (empty? separated)
@@ -114,7 +114,7 @@
         (subvec separated 2)
         (conj accu (bit-or (separated 0) (separated 1)))))))
         
-(defmethod ASCII7 :vector [ data ]
+(defmethod ASCII7 :vector [ #^clojure.core.Vec data ]
   (loop [ separated (byte-separate-out data)
           accu (vector-of :int) ]
     (if (empty? separated)

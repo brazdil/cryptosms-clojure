@@ -26,7 +26,7 @@
     (. global-aes-cbc init true 
       (new ParametersWithIV 
         (new KeyParameter crypto-key)
-        (byte-arrays/output crypto-iv)))
+        (byte-arrays/from-vector crypto-iv)))
     (block-cipher/outcome global-aes-cbc data) ))
 
 (defn decrypt-aes-cbc 
@@ -34,7 +34,7 @@
    Data and IV are Clojure vectors, key is Java byte array."
   [ data crypto-key crypto-iv ]
   (locking global-aes-cbc
-    (let [ iv-bytes (byte-arrays/output crypto-iv) ]
+    (let [ iv-bytes (byte-arrays/from-vector crypto-iv) ]
       (. global-aes-cbc reset)
       (. global-aes-cbc init false 
         (new ParametersWithIV 
@@ -44,7 +44,7 @@
 
 (with-test
   (defn- test-aes-cbc [ data crypto-key crypto-iv result ]
-    (let [ crypto-key-bytes (byte-arrays/output crypto-key)
+    (let [ crypto-key-bytes (byte-arrays/from-vector crypto-key)
            encrypted-data (encrypt-aes-cbc data crypto-key-bytes crypto-iv) ]
       (is (= (encrypt-aes-cbc data crypto-key-bytes crypto-iv) result))
       (is (= (decrypt-aes-cbc result crypto-key-bytes crypto-iv) data))))
