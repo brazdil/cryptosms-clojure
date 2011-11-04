@@ -5,7 +5,7 @@
             [uk.ac.cam.db538.cryptosms.serializables.uint :as uint]))
 
 (with-test
-  (defn composite 
+  (defn create 
     "Returns a serializable type combining together list of other serializables."
     [serializables]
     (uk.ac.cam.db538.cryptosms.serializables.common.Serializable.
@@ -27,11 +27,11 @@
            data { :item1 0x12, :item2 0x1234, :item3 0x12345678, :item4 0x1234567890ABCDEF} 
            result [ 0x12 0x12 0x34 0x12 0x34 0x56 0x78 0x12 0x34 0x56 0x78 0x90 0xAB 0xCD 0xEF ]
          ]
-      (is (thrown? IllegalArgumentException ((:import (composite items)) (vec (range 0 (- (count result) 1))) {} )))
-      (is (= ((:export (composite [])) {}) []))
-      (is (= ((:import (composite [])) [] {}) {}))
-      (is (= ((:length (composite [])) {}) 0 ))
-      (is (= ((:export (composite items)) data) result))
-      (is (= ((:import (composite items)) result {}) data))
-      (is (= ((:length (composite items)) data) (count result))) ))
+      (is (thrown? IllegalArgumentException ((:import (create items)) (vec (range 0 (- (count result) 1))) {} )))
+      (is (= ((:export (create [])) {}) []))
+      (is (= ((:import (create [])) [] {}) {}))
+      (is (= ((:length (create [])) {}) 0 ))
+      (is (= ((:export (create items)) data) result))
+      (is (= ((:import (create items)) result {}) data))
+      (is (= ((:length (create items)) data) (count result))) ))
 

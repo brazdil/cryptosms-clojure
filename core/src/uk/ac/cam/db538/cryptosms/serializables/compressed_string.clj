@@ -6,7 +6,7 @@
             [uk.ac.cam.db538.cryptosms.serializables.common :as common] ) )
 
 (with-test
-  (defn compressed-string
+  (defn create
     "Returns a serializable type that stores String using the best possible
      combination of encoding and DEFLATE compression, such that the size
      is least possible and no data is lost."
@@ -24,7 +24,7 @@
       (fn [data] (count (string-compression/compress (data key-name)))) ))
   ; tests just check that everything is integrated together correctly... string compression methods are tested separately
   (let [ data                   {:string "Hello world! I'm CryptoSMS"}
-         serializable           (compressed-string :string)
+         serializable           (create :string)
          exported               ((:export serializable) data)
          imported               ((:import serializable) exported {}) ]
     (is (= data imported))
@@ -32,7 +32,7 @@
     (is (= ((:length serializable) data) 24 ))))
 
 (with-test
-  (defn compressed-string-aligned
+  (defn create-aligned
     "Returns a serializable type that stores String using the best possible
      combination of encoding and DEFLATE compression, such that the size
      is least possible and no data is lost. Data is aligned to 16 bytes
@@ -51,7 +51,7 @@
       (fn [data] (count (string-compression/compress-align (data key-name)))) ))
   ; tests just check that everything is integrated together correctly... string compression methods are tested separately
   (let [ data                   {:string "Hello world! I'm CryptoSMS"}
-         serializable           (compressed-string-aligned :string)
+         serializable           (create-aligned :string)
          exported               ((:export serializable) data)
          imported               ((:import serializable) exported {}) ]
     (is (= data imported))

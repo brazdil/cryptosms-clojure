@@ -23,7 +23,7 @@
       ; export
       (fn [data]
         (let [ length-data-aligned    (utils/least-greater-multiple ((:length serializable) data) aes/block-size-aes-cbc) 
-               serializable-aligned   (align/align length-data-aligned serializable)
+               serializable-aligned   (align/create length-data-aligned serializable)
                length-data-all        (+ overhead-aes-cbc-sha1 length-data-aligned) ; HMAC + IV + data
                serialized-data        ((:export serializable-aligned) data)
                crypto-key             (key-name data)

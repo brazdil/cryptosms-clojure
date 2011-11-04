@@ -5,12 +5,14 @@
             [uk.ac.cam.db538.cryptosms.storage.binary-file :as binary-file] )
   (:import (java.io File RandomAccessFile)
            (uk.ac.cam.db538.cryptosms CryptoKey)
+           (uk.ac.cam.db538.cryptosms IErrorCallback)
            (uk.ac.cam.db538.cryptosms.storage.binary_file BinaryFile) )
   (:gen-class
     :implements [uk.ac.cam.db538.cryptosms.storage.IStorage]
     :state state
     :init init
-    :constructors { [String String uk.ac.cam.db538.cryptosms.CryptoKey] [] } ))
+    :constructors 
+      { [String String uk.ac.cam.db538.cryptosms.CryptoKey uk.ac.cam.db538.cryptosms.IErrorCallback] [] } ))
 
 (defrecord EncryptedStorageState
   [ #^clojure.core.Vec     crypto-key
@@ -22,11 +24,11 @@
      - path to the encrypted file
      - path to the journal
      - instance of CryptoKey to encrypt the file with"
-  [ #^String file-storage #^String file-journal #^CryptoKey crypto-key ]
+  [ #^String file-storage #^String file-journal #^CryptoKey crypto-key #^IErrorCallback callback ]
   [ [] 
     (EncryptedStorageState.
       (byte-arrays/into-vector (. crypto-key getKey))
-      (binary-file/open file-storage file-journal)) ])
+      (binary-file/open file-storage file-journal #(. callback onError %1) )) ])
 
 (defn -getConversationThread
   [ recipient ]
