@@ -23,9 +23,10 @@
    Arguments:
      - path to the encrypted file
      - path to the journal
-     - instance of CryptoKey to encrypt the file with"
+     - instance of CryptoKey to encrypt the file with
+     - callback class in case of exception"
   [ #^String file-storage #^String file-journal #^CryptoKey crypto-key #^IErrorCallback callback ]
-  [ [] 
+  [ []
     (EncryptedStorageState.
       (byte-arrays/into-vector (. crypto-key getKey))
       (binary-file/open file-storage file-journal #(. callback onError %1) )) ])

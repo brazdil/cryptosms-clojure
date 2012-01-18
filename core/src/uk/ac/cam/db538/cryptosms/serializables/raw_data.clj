@@ -34,7 +34,5 @@
     (is (thrown? IllegalArgumentException ((:export serializable) data-long)))
     (is (thrown? IllegalArgumentException ((:export serializable) data-short)))
     (is (thrown? IllegalArgumentException ((:import serializable) [ 1 2 3 4 ] {})))
-    (is (= data ((:import serializable) [ 1 2 3 4 5 6] {}) ))
-    (is (= data ((:import serializable) [ 1 2 3 4 5 7] {}) )) ))
-
-
+    (is (= data ((:import serializable) [ 1 2 3 4 5 6 ] {}) ))
+    (is (= data ((:import serializable) [ 1 2 3 4 5 7 ] {}) )) ))
