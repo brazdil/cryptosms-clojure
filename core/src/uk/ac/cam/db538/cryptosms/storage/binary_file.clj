@@ -108,34 +108,6 @@
     ; length is zero
     (is (= (. (new File str-file) length) 0)) ))
 
-(defn- error-handler-func 
-  "Will be called when an exception is thrown in either of the files. 
-   Calls the callback method given to agent."
-  [the-agent the-err]
-  ((:error-callback @the-agent) the-err))
-
-(defn #^clojure.lang.Agent open
-  "Opens or creates given storage file, returns an instance of BinaryFile
-   structure wrapped in an agent.
-   Arguments:
-     - path to the storage file
-     - path to the journal file
-     - callback function in case of exception"
-  [ #^String file-storage #^String file-journal error-callback ]
-  (let [ pointer-file   (file-safe-open file-storage)
-         file-agent     (agent 
-                          (BinaryFile. 
-                            file-storage
-                            file-journal
-                            pointer-file
-                            nil
-                            (/ (. pointer-file length)
-                               binaryfile-entry-length-aligned)
-                            error-callback
-                            {})) ]
-    (set-error-handler! file-agent error-handler-func)
-    file-agent))
-
 (defn- check-entry-index
   "Checks that the entry index is indeed inside the binary file
    or that it's the first free index, thus appending to the file."
@@ -143,6 +115,23 @@
   (if (> entry-index (:entry-count binary-file))
     (throw (new IndexOutOfBoundsException))))
 
+(defn- read-entry-from-journal
+  "Reads a general entry from the journal.
+   Arguments:
+     - binary file structure
+     - index of entry in the journal (not where it should be written in the binary file)"
+  [ binary-file journal-index ]
+  (do
+    ; move the file pointer to the right place
+    (. (:pointer-journal binary-file) seek (* journal-index journal-entry-length))
+    (let [ buffer (byte-arrays/create journal-entry-length) ]
+      ; read the data
+      (. (:pointer-journal binary-file) read buffer)
+      ; parse and return
+      ((:import journal-entry-structure)
+        (byte-arrays/into-vector buffer)
+        {}))))
+  
 (defn- write-entry-to-journal
   "Writes a general entry into the journal. 
    Arguments:
@@ -196,7 +185,37 @@
 ;  (do
 ;    ; check the entry-index (it will throw exception if it's incorrect)
 ;    (check-entry-index binary-file entry-index)
-    
+
+(defn- save-changes
+  "Checks that the operation in journal has committed and if so, it saves all the 
+   changes into the binary file."
+  [ binary-file ]
+  (let [ length (/ (. (:pointer-journal binary-file) length) journal-entry-length) ]
+    ; check it's not empty
+    (if (> length 0)
+      ; read the last entry and check it's committed
+      (if (= (:type (read-entry-from-journal binary-file (- length 1))) 
+             journal-entry-type-commit)
+        ; loop through all the entries
+        (loop [ journal-index 0 ]
+          (if (< journal-index (- length 1))
+            (let [ entry (read-entry-from-journal binary-file journal-index) ]
+              ; check its type is ENTRY
+              (if (= (:type entry) journal-entry-type-entry)
+                (do
+                  ; check the entry index
+                  (check-entry-index binary-file (:index entry))
+                  ; seek to the right spot
+                  (. (:pointer-file binary-file) seek (* (:index entry) binaryfile-entry-length-aligned))
+                  ; write the data
+                  (. (:pointer-file binary-file) write
+                    (byte-arrays/from-vector
+                      ((:export binaryfile-entry-structure) entry)))
+                  ; recur
+                  (recur (inc journal-index)))
+                ; throw an exception if it's not an ENTRY
+                (throw (new IllegalArgumentException))))))))))
+
 (defn- call-handler
   "Takes care of running an operation over binary file agent"
   [ binary-file function ]
@@ -206,8 +225,9 @@
         ; call the function
         binary-file-altered      (function binary-file-with-journal) ]
     ; write commit message to the log
-    (write-entry-to-journal binary-file-altered journal-entry-type-commit 0 journal-dummy-data) 
+    (write-entry-to-journal binary-file-with-journal journal-entry-type-commit 0 journal-dummy-data) 
     ; write changes into the binary file
+    (save-changes binary-file-with-journal)
     ; close the journal file
     (file-safe-close pointer-journal)
     ; return new value for the agent
@@ -220,3 +240,38 @@
      - function to be called on the binary file"
   [ file-agent function ]
   (send-off file-agent call-handler function)) 
+
+(defn- error-handler-func 
+  "Will be called when an exception is thrown in either of the files. 
+   Calls the callback method given to agent."
+  [the-agent the-err]
+  ((:error-callback @the-agent) the-err))
+
+(defn #^clojure.lang.Agent open
+  "Opens or creates given storage file, returns an instance of BinaryFile
+   structure wrapped in an agent.
+   Arguments:
+     - path to the storage file
+     - path to the journal file
+     - callback function in case of exception"
+  [ #^String file-storage #^String file-journal error-callback ]
+  (let [ pointer-file   (file-safe-open file-storage)
+         file-agent     (agent 
+                          (BinaryFile. 
+                            file-storage
+                            file-journal
+                            pointer-file
+                            nil
+                            (/ (. pointer-file length)
+                               binaryfile-entry-length-aligned)
+                            error-callback
+                            {})) ]
+    ; set error handler
+    (set-error-handler! file-agent error-handler-func)
+    ; check the journal
+    (send-off file-agent 
+              #(let [ pointer-journal (file-safe-open (:name-journal %)) ]
+                 (save-changes (assoc % :pointer-journal pointer-journal))
+                 (file-safe-close pointer-journal)
+                 %))
+    file-agent))
