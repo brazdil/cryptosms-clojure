@@ -28,7 +28,7 @@
   [ #^String file-storage #^String file-journal #^CryptoKey crypto-key #^IErrorCallback callback ]
   [ []
     (EncryptedStorageState.
-      (byte-arrays/into-vector (. crypto-key getKey))
+      (byte-arrays/to-vector (. crypto-key getKey))
       (binary-file/open file-storage file-journal #(. callback onError %1) )) ])
 
 (defn -getConversationThread

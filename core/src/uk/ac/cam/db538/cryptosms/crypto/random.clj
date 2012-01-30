@@ -22,6 +22,6 @@
   (defn next-vector
     "Generates a vector of given length, initialized with random data. Uses Java SecureRandom SHA1PRNG."
     [ #^Integer len ]
-    (byte-arrays/into-vector (next-bytes len)))
+    (byte-arrays/to-vector (next-bytes len)))
   (is (= (count (next-vector 10)) 10))
   (is (= (next-vector 0) [])))

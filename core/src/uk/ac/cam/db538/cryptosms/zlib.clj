@@ -18,7 +18,7 @@
     (. deflater finish)
     (loop [ ]
       (if (. deflater finished)
-        (subvec (byte-arrays/into-vector (. bos toByteArray)) 2) ; get rid of ZLIB header - wastes 2 bytes
+        (subvec (byte-arrays/to-vector (. bos toByteArray)) 2) ; get rid of ZLIB header - wastes 2 bytes
         (let [ compressed (. deflater deflate buffer) ]
           (. bos write buffer 0 compressed)
           (recur))))))
@@ -35,7 +35,7 @@
       (. inflater setInput data-bytes)
       (loop [ ]
         (if (. inflater finished)
-          (byte-arrays/into-vector (. bos toByteArray))
+          (byte-arrays/to-vector (. bos toByteArray))
           (let [ decompressed (. inflater inflate buffer) ]
             (. bos write buffer 0 decompressed)
             (recur)))))))

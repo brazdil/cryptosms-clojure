@@ -20,7 +20,7 @@
         (. global-hash-sha256 reset)
         (. global-hash-sha256 update data-bytes 0 data-length)
         (. global-hash-sha256 doFinal result-bytes 0)
-        (byte-arrays/into-vector result-bytes))))
+        (byte-arrays/to-vector result-bytes))))
   (is (= (sha256 (ASCII8 "The quick brown fox jumps over the lazy dog") ) (HEX "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592")))
   (is (= (sha256 (ASCII8 "The quick brown fox jumps over the lazy dog.") ) (HEX "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")))
   ; from NESSIE test vectors

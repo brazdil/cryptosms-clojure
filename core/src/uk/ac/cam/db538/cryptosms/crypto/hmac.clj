@@ -26,7 +26,7 @@
         (. global-hmac-sha1 init (new KeyParameter crypto-key))
         (. global-hmac-sha1 update data-bytes 0 data-length)
         (. global-hmac-sha1 doFinal result-bytes 0)
-        (byte-arrays/into-vector result-bytes))))
+        (byte-arrays/to-vector result-bytes))))
   ; tests from http://tools.ietf.org/html/rfc2202
   (is (= (sha1
            (ASCII8 "Hi There")
@@ -74,7 +74,7 @@
         (. global-hmac-sha256 init (new KeyParameter crypto-key))
         (. global-hmac-sha256 update data-bytes 0 data-length)
         (. global-hmac-sha256 doFinal result-bytes 0)
-        (byte-arrays/into-vector result-bytes))))
+        (byte-arrays/to-vector result-bytes))))
   ; tests from http://tools.ietf.org/html/rfc4231
   (is (= (sha256 
            (HEX "4869205468657265") 

@@ -11,7 +11,7 @@
          data-bytes        (byte-arrays/from-vector data) ]
     (loop [ off 0 ]
       (if (>= off length-expected)
-        (byte-arrays/into-vector data-result)
+        (byte-arrays/to-vector data-result)
         (if (not= (. cipher processBlock data-bytes off data-result off) block-size)
           nil ; error
           (recur (+ off block-size)))))));

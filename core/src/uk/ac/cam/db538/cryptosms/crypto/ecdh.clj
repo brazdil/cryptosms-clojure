@@ -42,7 +42,7 @@
   (locking global-ecdh-keygen
     (let [ key-pair (. global-ecdh-keygen generateKeyPair)
            private-key (cast ECPrivateKeyParameters (. key-pair getPrivate))
-           private-key-vector (byte-arrays/into-vector (. (. private-key getD) toByteArray)) ]
+           private-key-vector (byte-arrays/to-vector (. (. private-key getD) toByteArray)) ]
       ; align key vector to length-ecdh-key with leading zeros
       (reduce conj (reduce conj (vector-of :int) (repeat (- length-ecdh-key (count private-key-vector)) 0)) private-key-vector) )))
           
@@ -53,7 +53,7 @@
   (locking global-ecdh-keygen
     (let [ key-pair (. global-ecdh-keygen createKeyPair (new BigInteger (byte-arrays/from-vector private-key)) )
            public-key (cast ECPublicKeyParameters (. key-pair getPublic)) ]
-      (byte-arrays/into-vector (. (. (. public-key getQ) getCompressed) getEncoded)))))
+      (byte-arrays/to-vector (. (. (. public-key getQ) getCompressed) getEncoded)))))
 
 (defn get-shared-key
   "Takes an ECDH private key and a public key of the other party and returns
@@ -69,8 +69,8 @@
           (. agreement calculateAgreement (new ECPublicKeyParameters point ECDH_PARAMS)))))))
 
 (defn- ecdh-test [ prv-key1 pub-key1 prv-key2 pub-key2 shared ]
-  (let [ prv-key1 (byte-arrays/into-vector (. (new BigInteger prv-key1) toByteArray))
-         prv-key2 (byte-arrays/into-vector (. (new BigInteger prv-key2) toByteArray))
+  (let [ prv-key1 (byte-arrays/to-vector (. (new BigInteger prv-key1) toByteArray))
+         prv-key2 (byte-arrays/to-vector (. (new BigInteger prv-key2) toByteArray))
          pub-key1 (new BigInteger pub-key1)
          pub-key2 (new BigInteger pub-key2)
          shared (new BigInteger shared)

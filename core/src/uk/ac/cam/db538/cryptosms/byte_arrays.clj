@@ -24,7 +24,7 @@
 	(is (= (vec (from-vector [ 255 254 253 ])) [ -1 -2 -3 ])) )
 
 (with-test
-  (defn #^clojure.core.Vec  into-vector
+  (defn #^clojure.core.Vec  to-vector
     "Turns a Java byte array into a Clojure vector. Produces vector with unsigned integers (numbers between 0-255)."
     [#^"[B" array]
     (loop [ pos 0
@@ -37,8 +37,8 @@
            (if (< head 0)
              (assoc accu pos (+ head 256))
              accu))))))
-  (is (= (into-vector (byte-array (map #(byte %) [ 0 1 2 3 ]))) [ 0 1 2 3 ]))
-  (is (= (into-vector (byte-array (map #(byte %) [ -1 -2 -3 ]))) [ 255 254 253 ])) ) 
+  (is (= (to-vector (byte-array (map #(byte %) [ 0 1 2 3 ]))) [ 0 1 2 3 ]))
+  (is (= (to-vector (byte-array (map #(byte %) [ -1 -2 -3 ]))) [ 255 254 253 ])) ) 
   
 ; byte-array Java type
 (defn java-type [] (java.lang.Class/forName "[B"))

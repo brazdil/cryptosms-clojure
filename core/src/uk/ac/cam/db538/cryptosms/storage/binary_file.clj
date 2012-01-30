@@ -17,7 +17,7 @@
     #^RandomAccessFile   pointer-journal
                          entry-count
                          error-callback
-                         cache
+                         cache-atom
   ])
 
 (def journal-entry-length 256)
@@ -129,7 +129,7 @@
       (. (:pointer-journal binary-file) read buffer)
       ; parse and return
       ((:import journal-entry-structure)
-        (byte-arrays/into-vector buffer)
+        (byte-arrays/to-vector buffer)
         {}))))
   
 (defn- write-entry-to-journal
@@ -146,7 +146,7 @@
         {:type entry-type, :index entry-index, :data entry-data})) ))
   
 (defn change-entry
-  "Changes an entry in the binary file, which includes adding it into :cache 
+  "Changes an entry in the binary file, which includes adding it into cache 
    of the agent and writing it into the journal. Returns altered binary file
    Arguments:
      - binary file structure
@@ -169,22 +169,44 @@
         journal-entry-type-entry 
         entry-index 
         ((:export serializer) data))
-      ; add to cache and return
-      (assoc binary-file :cache
-        (assoc (:cache binary-file) entry-index data)))))
+      ; add to cache
+      (swap! (:cache-atom binary-file) 
+             #(assoc % entry-index data))
+      ; return the altered binary-file
+      binary-file)))
     
-;(defn get-entry
-;  "Returns an entry in the binary file. If it is in the cache, it will return that immediately,
-;   otherwise it will read it from the binary file.
-;   Arguments:
-;     - binary file structure
-;     - entry index in the file
-;     - serializer (will be used to recreate the object from bytes)
-;     - data necessary for the serializer"
-;  [ binary-file entry-index serializer import-data ]
-;  (do
-;    ; check the entry-index (it will throw exception if it's incorrect)
-;    (check-entry-index binary-file entry-index)
+(defn get-entry
+  "Returns an entry in the binary file. If it is in the cache, it will return that immediately,
+   otherwise it will read it from the binary file.
+   Arguments:
+     - binary file structure
+     - entry index in the file
+     - serializer (will be used to recreate the object from bytes)
+     - data necessary for the serializer"
+  [ binary-file entry-index serializer import-data ]
+  (do
+    ; check the entry-index (it will throw exception if it's incorrect)
+    (check-entry-index binary-file entry-index)
+    ; look it up in the cache
+    (let [ cache-entry (get @(:cache-atom binary-file) entry-index) ]
+      (if (nil? cache-entry)
+        ; if it's nil, we need to load it from the file (can't be in the journal)
+        (do
+          ; seek to the right spot
+          (. (:pointer-file binary-file) seek (* entry-index binaryfile-entry-length-aligned))
+          ; read the data
+          (let [ buffer (byte-arrays/create binaryfile-entry-length-aligned) ] 
+            (. (:pointer-file binary-file) read buffer)
+            ; use the serializer to convert it into an object
+            (let [ entry-aligned ((:import binaryfile-entry-structure) (byte-arrays/to-vector buffer) {})
+                   entry         ((:import serializer) (:data entry-aligned) import-data) ]
+              ; put it into the cache
+              (swap! (:cache-atom binary-file) 
+                     #(assoc % entry-index entry))
+              ; return
+              entry)))
+        ; if it's in the cache, return it straight away
+        cache-entry))))
 
 (defn- save-changes
   "Checks that the operation in journal has committed and if so, it saves all the 
@@ -265,7 +287,7 @@
                             (/ (. pointer-file length)
                                binaryfile-entry-length-aligned)
                             error-callback
-                            {})) ]
+                            (atom {}))) ]
     ; set error handler
     (set-error-handler! file-agent error-handler-func)
     ; check the journal

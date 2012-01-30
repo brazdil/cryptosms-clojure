@@ -9,7 +9,7 @@
   utils/string-vector)
 
 (defmethod ASCII8 :string [ #^String data ]
-  (byte-arrays/into-vector (. data getBytes "US-ASCII")))
+  (byte-arrays/to-vector (. data getBytes "US-ASCII")))
   
 (defmethod ASCII8 :vector [ #^clojure.core.Vec data ]
   (new String (byte-arrays/from-vector data) "US-ASCII"))
@@ -20,7 +20,7 @@
   utils/string-vector)
   
 (defmethod UTF8 :string [ #^String data ]
-  (byte-arrays/into-vector (. data getBytes "UTF-8")))
+  (byte-arrays/to-vector (. data getBytes "UTF-8")))
   
 (defmethod UTF8 :vector [ #^clojure.core.Vec data ]
   (new String (byte-arrays/from-vector data) "UTF-8"))
@@ -31,7 +31,7 @@
   utils/string-vector)
   
 (defmethod UTF16 :string [ #^String data ]
-  (byte-arrays/into-vector (. data getBytes "UTF-16")))
+  (byte-arrays/to-vector (. data getBytes "UTF-16")))
   
 (defmethod UTF16 :vector [ #^clojure.core.Vec data ]
   (new String (byte-arrays/from-vector data) "UTF-16"))
